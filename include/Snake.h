@@ -18,8 +18,6 @@ typedef struct Snake{
     Movement movement;
 }Snake;
 
-
-
 Snake *spawn();
 void move(Snake *snake);
 void eat(Snake *snake);

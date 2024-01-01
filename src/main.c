@@ -1,106 +1,70 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
-#include <Snake.h>
 #include <Food.h>
+#include <rendering.h>
 #include <Constants.h>
-#include <utils.h>
- //pixel size of a square
 
-void ErrMessage(char message[]);
-void ColorSnake(Snake *snake, SDL_Renderer *renderer);
-void FPSLimit (unsigned int limit);
-
-int score = 0;
 const int desired_delta = 1000 / FRAME_RATE;
 
 int main(int argv, char *arcg[]){
-    if (SDL_Init(SDL_INIT_VIDEO) != 0){
-        SDL_Log("Error: Initialisation of SDL -> %s\n", SDL_GetError());
-        SDL_Quit();
-        exit(EXIT_FAILURE);
-    }
-    SDL_Window *window = NULL;
-    SDL_Renderer *renderer = NULL;
+    setup();
+    TTF_Font *font = open_font(20);
+    //TTF_Font *option_font = open_font(20);
     
-    if (SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, 0, &window, &renderer) != 0){ //perhaps make a fullscreen window
-        ErrMessage("Error: Window Creation and rendering");
-    }
-    Snake *snake = spawn();
-    Food *food = initFood();
-    move(snake);
-    SDL_bool running = SDL_TRUE;
+    SDL_Window *window = init_window();
+    SDL_Renderer *renderer = init_renderer(window);
+
+    SDL_Color title_color = {0, 220, 80};
+    SDL_Color unselected_color = {255, 0, 0};
+    SDL_Color selected_color = {0, 0, 80};
+
+    SDL_Texture *title_texture = create_font_texture(renderer, font, "Snake", title_color);
+    SDL_Texture *play_unselected_texture = create_font_texture(renderer, font, "Play", unselected_color);
+    SDL_Texture *play_selected_texture = create_font_texture(renderer, font, "Play", selected_color);
+    SDL_Texture *options_unselected_texture = create_font_texture(renderer, font, "Options", unselected_color);
+    SDL_Texture *options_selected_texture = create_font_texture(renderer, font, "Options", selected_color);
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_Rect title_location = {WIDTH / 4, HEIGHT / 11, BOX_w * 2, BOX_h * 2};
+    SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 0.5, 
+                    BOX_w, BOX_h};
+    SDL_Rect options_rect = {WIDTH * 3 / 8, HEIGHT * 8 / 11, 
+                    BOX_w, BOX_h};
+
+    //SDL_RenderDrawRect(renderer, &play_rect);
+    //SDL_RenderDrawRect(renderer, &options_rect);
+    SDL_RenderCopy(renderer, title_texture, NULL, &title_location);
+    SDL_RenderCopy(renderer, play_unselected_texture, NULL, &play_rect);
+    SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
+    int running = 1;
+    enum MENU state = menu;
+    unsigned const int desired_delta = 1000 / MENU_RATE;
+
+    //menu_loop(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture, options_unselected_texture);
+
     while (running){
-        unsigned int loop_start = SDL_GetTicks();
+        unsigned int start = SDL_GetTicks();
+        int mouse_x, mouse_y;
+        int clicked = 0;
         SDL_Event event;
-        //printf("Coords snake -> x: %d\ty:%d\n", snake->body[0].x, snake->body[0].y);
-        //printf("Coords food-> x: %d\ty:%d\n", food->x, food->y);
-
-        ColorSnake(snake, renderer);
-
-        if (checkCollision(snake)){
-            printf("Game Over!\nScore: %d", score);
-            SDL_RenderClear(renderer);
-            clearFood(food);
-            clearSnake(snake);
-            break;
+        switch (state){
+            case menu:
+                main_menu(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture,
+                options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, &clicked, &state, &running);
+                break;
+            case game:
+                game_loop(renderer, &running);
+                break;
+            case options:
+                options_menu(window, renderer, event, &mouse_x, &mouse_y, &clicked, &state, &running);
+                break;
+            case quit:
+                running = 0;
+                break;
         }
-
-        if (snake->body[0].x == food->x && snake->body[0].y == food->y){
-            eat(snake);
-            score++;
-            food = initFood();
-        }
-        if (SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for food
-            ErrMessage("Error: Changing color for the render");
-        }
-        SDL_Rect food_rec = {food->x, food->y, PIXEL_UNIT, PIXEL_UNIT};
-        if (SDL_RenderFillRect(renderer, &food_rec) != 0){
-                ErrMessage("Error: Impossible to color a rectangle");
-        }
-        FPSLimit(SDL_GetTicks());
-        while (SDL_PollEvent(&event)){
-            switch (event.type){
-                case SDL_KEYDOWN:
-                    switch (event.key.keysym.sym){
-                        case SDLK_UP:
-                        case SDLK_w:
-                            snake->movement = North;
-                            continue;
-                        case SDLK_DOWN:
-                        case SDLK_s:
-                            snake->movement = South;
-                            continue;
-                        case SDLK_RIGHT:
-                        case SDLK_d:
-                            snake->movement = East;
-                            continue;
-                        case SDLK_LEFT:
-                        case SDLK_a:
-                            snake->movement = West;
-                            continue;
-                        default: //previous direction
-                            continue;
-                    }
-                case SDL_QUIT:
-                    running = SDL_FALSE;
-                    //SDL_RenderClear(renderer);
-                    clearSnake(snake);
-                    clearFood(food);
-                    break;
-                default:
-                    break;
-            }
-        }
-        FPSLimit(SDL_GetTicks());
+        FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
-        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for snake
-            ErrMessage("Error: Changing color for the render");
-        }
-        SDL_RenderClear(renderer);
-        move(snake);
     }
-    
     
     SDL_DestroyRenderer(renderer);
 
@@ -108,45 +72,4 @@ int main(int argv, char *arcg[]){
     SDL_Quit();
 
     return EXIT_SUCCESS;
-}
-
-void ErrMessage(char message[]){
-    SDL_Log("%s -> %s\n", message, SDL_GetError());
-    SDL_Quit();
-    exit(EXIT_FAILURE);
-}
-
-void ColorSnake(Snake *snake, SDL_Renderer *renderer){
-        if (SDL_SetRenderDrawColor(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-            ErrMessage("Error: Changing color for the render");
-        }
-        SDL_Rect snake_part = {snake->body[0].x, snake->body[0].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-        if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-            ErrMessage("Error: Impossible to color a rectangle");
-        }
-        if (snake->size > 1){
-            for (int i = 1; i<snake->size - 1; i++){
-                if (SDL_SetRenderDrawColor(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-                    ErrMessage("Error: Changing color for the render");
-                }
-                SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-                if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-                    ErrMessage("Error: Impossible to color a rectangle");
-                }
-            }
-            if (SDL_SetRenderDrawColor(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-                ErrMessage("Error: Changing color for the render");
-            }
-            SDL_Rect snake_part = {snake->body[snake->size-1].x, snake->body[snake->size-1].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-            if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-                ErrMessage("Error: Impossible to color a rectangle");
-            }
-        }
-}
-
-void FPSLimit(unsigned int start){
-    unsigned int delta = SDL_GetTicks() - start;
-    if (delta < desired_delta){
-        SDL_Delay(desired_delta - delta);
-    }
 }
