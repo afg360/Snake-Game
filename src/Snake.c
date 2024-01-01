@@ -28,9 +28,7 @@ void move(Snake *snake){
                     snake->body[i] = prev;
                     prev = curr;
                 }
-                else{
-                    snake->body[i].y-= PIXEL_UNIT;
-                }
+                else snake->body[i].y-= PIXEL_UNIT;
             }
             break;
         case South:
@@ -40,9 +38,7 @@ void move(Snake *snake){
                     snake->body[i] = prev;
                     prev = curr;
                 }
-                else{
-                    snake->body[i].y+= PIXEL_UNIT;
-                }
+                else snake->body[i].y+= PIXEL_UNIT;
             }
             break;
         case East:
