@@ -4,12 +4,15 @@
 #include <Snake.h>
 #include <Food.h>
 #include <Constants.h>
+#include <utils.h>
  //pixel size of a square
 
 void ErrMessage(char message[]);
+void ColorSnake(Snake *snake, SDL_Renderer *renderer);
 void FPSLimit (unsigned int limit);
 
 int score = 0;
+const int desired_delta = 1000 / FRAME_RATE;
 
 int main(int argv, char *arcg[]){
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -23,44 +26,17 @@ int main(int argv, char *arcg[]){
     if (SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, 0, &window, &renderer) != 0){ //perhaps make a fullscreen window
         ErrMessage("Error: Window Creation and rendering");
     }
-    /*
-    if (SDL_SetRenderDrawColor(renderer, 255, 255, 0, SDL_ALPHA_OPAQUE) != 0){//make yellow color for lines
-        ErrMessage("Error: Changing color for the render");
-    }
-    //Horizontal lines
-    for (int i = 0; i<HEIGHT/PIXEL_UNIT; i++){
-        if (SDL_RenderDrawLine(renderer, 0, PIXEL_UNIT*i, WIDTH, PIXEL_UNIT*i) != 0){
-        ErrMessage("Error: Impossible to draw a line");
-        }
-    }
-    //Vertical lines
-    for (int j = 0; j<WIDTH/PIXEL_UNIT; j++){
-        if (SDL_RenderDrawLine(renderer, PIXEL_UNIT*j, 0, PIXEL_UNIT*j, HEIGHT) != 0){
-        ErrMessage("Error: Impossible to draw a line");
-        }
-    }
-    SDL_RenderPresent(renderer); //updates rendering
-    SDL_RenderClear(renderer);
-    */
-    //refresh/update time frame to setup too so that snake doesnt move too fast
     Snake *snake = spawn();
     Food *food = initFood();
     move(snake);
     SDL_bool running = SDL_TRUE;
     while (running){
+        unsigned int loop_start = SDL_GetTicks();
         SDL_Event event;
-        printf("Coords snake -> x: %d\ty:%d\n", snake->body[0].x, snake->body[0].y);
-        printf("Coords food-> x: %d\ty:%d\n", food->x, food->y);
+        //printf("Coords snake -> x: %d\ty:%d\n", snake->body[0].x, snake->body[0].y);
+        //printf("Coords food-> x: %d\ty:%d\n", food->x, food->y);
 
-        if (SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for snake
-            ErrMessage("Error: Changing color for the render");
-        }
-        for (int i = 0; i<snake->size; i++){
-            SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-            if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-                ErrMessage("Error: Impossible to color a rectangle");
-            }
-        }
+        ColorSnake(snake, renderer);
 
         if (checkCollision(snake)){
             printf("Game Over!\nScore: %d", score);
@@ -82,22 +58,25 @@ int main(int argv, char *arcg[]){
         if (SDL_RenderFillRect(renderer, &food_rec) != 0){
                 ErrMessage("Error: Impossible to color a rectangle");
         }
-        unsigned int frameLimit = SDL_GetTicks()+FRAME_RATE;
-        FPSLimit(frameLimit);
+        FPSLimit(SDL_GetTicks());
         while (SDL_PollEvent(&event)){
             switch (event.type){
                 case SDL_KEYDOWN:
                     switch (event.key.keysym.sym){
                         case SDLK_UP:
+                        case SDLK_w:
                             snake->movement = North;
                             continue;
                         case SDLK_DOWN:
+                        case SDLK_s:
                             snake->movement = South;
                             continue;
                         case SDLK_RIGHT:
+                        case SDLK_d:
                             snake->movement = East;
                             continue;
                         case SDLK_LEFT:
+                        case SDLK_a:
                             snake->movement = West;
                             continue;
                         default: //previous direction
@@ -105,6 +84,7 @@ int main(int argv, char *arcg[]){
                     }
                 case SDL_QUIT:
                     running = SDL_FALSE;
+                    //SDL_RenderClear(renderer);
                     clearSnake(snake);
                     clearFood(food);
                     break;
@@ -112,8 +92,7 @@ int main(int argv, char *arcg[]){
                     break;
             }
         }
-        frameLimit = SDL_GetTicks()+FRAME_RATE;
-        FPSLimit(frameLimit);
+        FPSLimit(SDL_GetTicks());
         SDL_RenderPresent(renderer);
         if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for snake
             ErrMessage("Error: Changing color for the render");
@@ -137,16 +116,37 @@ void ErrMessage(char message[]){
     exit(EXIT_FAILURE);
 }
 
-void FPSLimit(unsigned int limit){
-    unsigned int ticks= SDL_GetTicks();
-    if (limit < ticks ){
-        return;
-    }
-    else if (limit > ticks+FRAME_RATE){
-        SDL_Delay(FRAME_RATE);
-    }
+void ColorSnake(Snake *snake, SDL_Renderer *renderer){
+        if (SDL_SetRenderDrawColor(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
+            ErrMessage("Error: Changing color for the render");
+        }
+        SDL_Rect snake_part = {snake->body[0].x, snake->body[0].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+        if (SDL_RenderFillRect(renderer, &snake_part) != 0){
+            ErrMessage("Error: Impossible to color a rectangle");
+        }
+        if (snake->size > 1){
+            for (int i = 1; i<snake->size - 1; i++){
+                if (SDL_SetRenderDrawColor(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
+                    ErrMessage("Error: Changing color for the render");
+                }
+                SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+                if (SDL_RenderFillRect(renderer, &snake_part) != 0){
+                    ErrMessage("Error: Impossible to color a rectangle");
+                }
+            }
+            if (SDL_SetRenderDrawColor(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
+                ErrMessage("Error: Changing color for the render");
+            }
+            SDL_Rect snake_part = {snake->body[snake->size-1].x, snake->body[snake->size-1].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+            if (SDL_RenderFillRect(renderer, &snake_part) != 0){
+                ErrMessage("Error: Impossible to color a rectangle");
+            }
+        }
+}
 
-    else{
-        SDL_Delay(limit-ticks);
+void FPSLimit(unsigned int start){
+    unsigned int delta = SDL_GetTicks() - start;
+    if (delta < desired_delta){
+        SDL_Delay(desired_delta - delta);
     }
 }
