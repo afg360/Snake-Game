@@ -118,7 +118,7 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
 }
 
 void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
-                int *clicked, enum MENU *choice, int *running){
+                int *clicked, SDL_Cursor *cursor, enum MENU *choice, int *running){
     SDL_Rect title_rect = {WIDTH / 8, HEIGHT / 9, 
                     BOX_h, BOX_h};
     SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 4 / 9, 
@@ -128,10 +128,8 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
 
     while (SDL_PollEvent(&event)){
         if (event.type == SDL_QUIT){
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
             *running = 0;
+            break;
         }
         else if (event.type == SDL_MOUSEMOTION){
             *mouse_x = event.motion.x;
@@ -146,10 +144,12 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
         // need error message if not 0
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &title_rect);
+        SDL_SetCursor(cursor);
         if (*clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *choice = menu;
+            SDL_SetCursor(SDL_GetDefaultCursor());
         }
     }
     else{
@@ -157,26 +157,19 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
         SDL_RenderFillRect(renderer, &title_rect);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderDrawRect(renderer, &title_rect);
+        SDL_SetCursor(SDL_GetDefaultCursor());
     }
 }
 
 
 void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
                 SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
-                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, enum MENU *choice, int *running){
+                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, SDL_Cursor *cursor, enum MENU *choice, int *running){
     int clicked = 0;
     while (SDL_PollEvent(&event)){
         if (event.type == SDL_QUIT){
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyTexture(title_texture);
-            SDL_DestroyTexture(play_unselected_texture);
-            SDL_DestroyTexture(play_selected_texture);
-            SDL_DestroyTexture(options_unselected_texture);
-            SDL_DestroyTexture(options_selected_texture);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
             *running = 0;
+            break;
         }
         else if (event.type == SDL_MOUSEMOTION){
             *mouse_x = event.motion.x;
@@ -191,9 +184,11 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         // need error message if not 0
         SDL_RenderFillRect(renderer, &play_rect);
         SDL_RenderCopy(renderer, play_selected_texture, NULL, &play_rect);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
+            SDL_SetCursor(SDL_GetDefaultCursor());
             *choice = level;
         }
     }
@@ -202,9 +197,11 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         // need error message if not 0
         SDL_RenderFillRect(renderer, &options_rect);
         SDL_RenderCopy(renderer, options_selected_texture, NULL, &options_rect);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
+            SDL_SetCursor(SDL_GetDefaultCursor());
             *choice = options;
         }
     }
@@ -217,11 +214,12 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         SDL_RenderCopy(renderer, play_unselected_texture, NULL, &play_rect);
         SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetCursor(SDL_GetDefaultCursor());
     }
 }
 
 void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_frames, 
-            int *running, int *mouse_x, int *mouse_y, enum MENU *state){
+            int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state){
     SDL_Rect easy = {WIDTH / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect medium = {WIDTH * 3 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
@@ -238,14 +236,11 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
 
     while (SDL_PollEvent(&event)){
         if (event.type == SDL_QUIT){
-            SDL_DestroyRenderer(renderer);
             SDL_DestroyTexture(easy_texture);
             SDL_DestroyTexture(med_texture);
             SDL_DestroyTexture(hard_texture);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
             *running = 0;
+            break;
         }
         else if (event.type == SDL_MOUSEMOTION){
             *mouse_x = event.motion.x;
@@ -261,11 +256,13 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &easy);
         SDL_RenderCopy(renderer, easy_texture, NULL, &easy);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *game_frames = EASY_RATE;
             *state = game;
+            SDL_SetCursor(SDL_GetDefaultCursor());
         }
     }
     else if (*mouse_x >= medium.x && *mouse_x <= medium.x + medium.w 
@@ -274,11 +271,13 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &medium);
         SDL_RenderCopy(renderer, med_texture, NULL, &medium);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *game_frames = MED_RATE;
             *state = game;
+            SDL_SetCursor(SDL_GetDefaultCursor());
         }
     }
     else if (*mouse_x >= hard.x && *mouse_x <= hard.x + hard.w 
@@ -287,11 +286,13 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &hard);
         SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *game_frames = HARD_RATE;
             *state = game;
+            SDL_SetCursor(SDL_GetDefaultCursor());
         }
     }
     else if (*mouse_x >= back.x && *mouse_x <= back.x + back.w 
@@ -299,10 +300,12 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         // need error message if not 0
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(renderer, &back);
+        SDL_SetCursor(cursor);
         if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *state = menu;
+            SDL_SetCursor(SDL_GetDefaultCursor());
         }
     }
     else{
@@ -314,6 +317,7 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         SDL_RenderCopy(renderer, med_texture, NULL, &medium);
         SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_SetCursor(SDL_GetDefaultCursor());
     }
 }
 

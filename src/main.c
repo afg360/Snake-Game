@@ -36,9 +36,9 @@ int main(int argv, char *arcg[]){
     SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
     int running = 1;
     enum MENU state = menu;
+    SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     unsigned const int desired_delta = 1000 / MENU_RATE;
     unsigned int game_frames;
-    //menu_loop(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture, options_unselected_texture);
 
     while (running){
         unsigned int start = SDL_GetTicks();
@@ -48,16 +48,16 @@ int main(int argv, char *arcg[]){
         switch (state){
             case menu:
                 main_menu(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture,
-                options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, &state, &running);
+                options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, cursor, &state, &running);
                 break;
             case level:
-                level_menu(window, renderer, &game_frames, &mouse_x, &mouse_y, &running, &state);
+                level_menu(window, renderer, &game_frames, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
                 game_loop(renderer, &running, MED_RATE);
                 break;
             case options:
-                options_menu(window, renderer, event, &mouse_x, &mouse_y, &clicked, &state, &running);
+                options_menu(window, renderer, event, &mouse_x, &mouse_y, &clicked, cursor, &state, &running);
                 break;
             case quit:
                 running = 0;
@@ -77,7 +77,7 @@ int main(int argv, char *arcg[]){
     SDL_DestroyTexture(options_selected_texture);
     SDL_DestroyTexture(options_unselected_texture);
     SDL_DestroyRenderer(renderer);
-
+    SDL_FreeCursor(cursor);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
     TTF_Quit();
