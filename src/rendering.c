@@ -119,7 +119,7 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
 
 void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
                 int *clicked, enum MENU *choice, int *running){
-    SDL_Rect title_rect = {WIDTH * 1 / 8, HEIGHT / 9, 
+    SDL_Rect title_rect = {WIDTH / 8, HEIGHT / 9, 
                     BOX_h, BOX_h};
     SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 4 / 9, 
                     BOX_w, BOX_h};
@@ -163,7 +163,8 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
 
 void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
                 SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
-                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, int *clicked, enum MENU *choice, int *running){
+                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, enum MENU *choice, int *running){
+    int clicked = 0;
     while (SDL_PollEvent(&event)){
         if (event.type == SDL_QUIT){
             SDL_DestroyRenderer(renderer);
@@ -172,6 +173,7 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
             SDL_DestroyTexture(play_selected_texture);
             SDL_DestroyTexture(options_unselected_texture);
             SDL_DestroyTexture(options_selected_texture);
+            SDL_DestroyRenderer(renderer);
             SDL_DestroyWindow(window);
             SDL_Quit();
             *running = 0;
@@ -181,7 +183,7 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
             *mouse_y = event.motion.y;
         }
         else if (event.type == SDL_MOUSEBUTTONDOWN){
-            *clicked = 1;
+            clicked = 1;
         }
     }
     if (*mouse_x >= play_rect.x && *mouse_x <= play_rect.x + play_rect.w
@@ -189,10 +191,10 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         // need error message if not 0
         SDL_RenderFillRect(renderer, &play_rect);
         SDL_RenderCopy(renderer, play_selected_texture, NULL, &play_rect);
-        if (*clicked){
+        if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
-            *choice = game;
+            *choice = level;
         }
     }
     else if (*mouse_x >= options_rect.x && *mouse_x <= options_rect.x + options_rect.w 
@@ -200,7 +202,7 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         // need error message if not 0
         SDL_RenderFillRect(renderer, &options_rect);
         SDL_RenderCopy(renderer, options_selected_texture, NULL, &options_rect);
-        if (*clicked){
+        if (clicked){
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
             *choice = options;
@@ -220,24 +222,121 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
     }
 }
 
-void game_loop(SDL_Renderer *renderer, int *running){
+void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_frames, 
+            int *running, int *mouse_x, int *mouse_y, enum MENU *state){
+    SDL_Rect easy = {WIDTH / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect medium = {WIDTH * 3 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
+
+    TTF_Font *font = open_font(14);
+    SDL_Color color = {245, 245, 245};
+    SDL_Texture *easy_texture = create_font_texture(renderer, font, "Easy", color);
+    SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
+    SDL_Texture *hard_texture = create_font_texture(renderer, font, "Hard", color);
+    TTF_CloseFont(font);
+    SDL_Event event;
+    int clicked = 0;
+
+    while (SDL_PollEvent(&event)){
+        if (event.type == SDL_QUIT){
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyTexture(easy_texture);
+            SDL_DestroyTexture(med_texture);
+            SDL_DestroyTexture(hard_texture);
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            *running = 0;
+        }
+        else if (event.type == SDL_MOUSEMOTION){
+            *mouse_x = event.motion.x;
+            *mouse_y = event.motion.y;
+        }
+        else if (event.type == SDL_MOUSEBUTTONDOWN){
+            clicked = 1;
+        }
+    }
+    if (*mouse_x >= easy.x && *mouse_x <= easy.x + easy.w
+        && *mouse_y <= easy.y + easy.h && *mouse_y >= easy.y){
+        // need error message if not 0
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &easy);
+        SDL_RenderCopy(renderer, easy_texture, NULL, &easy);
+        if (clicked){
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            *game_frames = EASY_RATE;
+            *state = game;
+        }
+    }
+    else if (*mouse_x >= medium.x && *mouse_x <= medium.x + medium.w 
+            && *mouse_y <= medium.y + medium.h && *mouse_y >= medium.y){
+        // need error message if not 0
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &medium);
+        SDL_RenderCopy(renderer, med_texture, NULL, &medium);
+        if (clicked){
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            *game_frames = MED_RATE;
+            *state = game;
+        }
+    }
+    else if (*mouse_x >= hard.x && *mouse_x <= hard.x + hard.w 
+            && *mouse_y <= hard.y + hard.h && *mouse_y >= hard.y){
+        // need error message if not 0
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &hard);
+        SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
+        if (clicked){
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            *game_frames = HARD_RATE;
+            *state = game;
+        }
+    }
+    else if (*mouse_x >= back.x && *mouse_x <= back.x + back.w 
+            && *mouse_y <= back.y + back.h && *mouse_y >= back.y){
+        // need error message if not 0
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &back);
+        if (clicked){
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            *state = menu;
+        }
+    }
+    else{
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &easy);
+        SDL_RenderFillRect(renderer, &medium);
+        SDL_RenderFillRect(renderer, &hard);
+        SDL_RenderCopy(renderer, easy_texture, NULL, &easy);
+        SDL_RenderCopy(renderer, med_texture, NULL, &medium);
+        SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        //SDL_RenderDrawRect(renderer, &play_rect);
+        //SDL_RenderDrawRect(renderer, &options_rect);
+    }
+}
+
+void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames){
     Snake *snake = spawn();
     Food *food = initFood();
-    unsigned const int desired_delta = 1000 / FRAME_RATE;
+    unsigned const int desired_delta = 1000 / frames;
     int score = 0;
     move(snake);
     while (*running){
-        unsigned int loop_start = SDL_GetTicks();
-
         SDL_Event event;
         color_snake(snake, renderer);
 
         if (checkCollision(snake)){
             printf("Game Over!\nScore: %d", score);
-            SDL_RenderClear(renderer);
             clearFood(food);
             clearSnake(snake);
             *running = 0;
+            break;
         }
 
         if (snake->body[0].x == food->x && snake->body[0].y == food->y){

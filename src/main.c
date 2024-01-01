@@ -4,8 +4,6 @@
 #include <rendering.h>
 #include <Constants.h>
 
-const int desired_delta = 1000 / FRAME_RATE;
-
 int main(int argv, char *arcg[]){
     setup();
     TTF_Font *font = open_font(20);
@@ -39,7 +37,7 @@ int main(int argv, char *arcg[]){
     int running = 1;
     enum MENU state = menu;
     unsigned const int desired_delta = 1000 / MENU_RATE;
-
+    unsigned int game_frames;
     //menu_loop(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture, options_unselected_texture);
 
     while (running){
@@ -50,10 +48,13 @@ int main(int argv, char *arcg[]){
         switch (state){
             case menu:
                 main_menu(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture,
-                options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, &clicked, &state, &running);
+                options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, &state, &running);
+                break;
+            case level:
+                level_menu(window, renderer, &game_frames, &mouse_x, &mouse_y, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running);
+                game_loop(renderer, &running, MED_RATE);
                 break;
             case options:
                 options_menu(window, renderer, event, &mouse_x, &mouse_y, &clicked, &state, &running);
@@ -66,9 +67,16 @@ int main(int argv, char *arcg[]){
         SDL_RenderPresent(renderer);
     }
     
+    SDL_DestroyTexture(title_texture);
+    SDL_DestroyTexture(play_selected_texture);
+    SDL_DestroyTexture(play_unselected_texture);
+    SDL_DestroyTexture(options_selected_texture);
+    SDL_DestroyTexture(options_unselected_texture);
     SDL_DestroyRenderer(renderer);
 
     SDL_DestroyWindow(window);
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_Quit();
 
     return EXIT_SUCCESS;

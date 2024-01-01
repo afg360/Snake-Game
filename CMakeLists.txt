@@ -18,7 +18,7 @@ add_executable(Snake_Game ${SOURCES})
 target_include_directories(Snake_Game PRIVATE include)
 
 # Specify additional library directories
-target_link_directories(Snake_Game PRIVATE /lib)
+link_directories(Snake_Game PRIVATE lib, bin)
 
 # Link against dynamic libraries
-target_link_libraries(Snake_Game PRIVATE SDL2main, SDL2, mingw32)
+target_link_libraries(Snake_Game PRIVATE SDL2main, SDL2, mingw32, SDL2_ttf)

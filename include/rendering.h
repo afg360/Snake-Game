@@ -7,7 +7,7 @@
 #include <Food.h>
 
 enum MENU{
-    menu, game, options, quit
+    menu, level, game, options, quit
 };
 
 void setup();
@@ -23,8 +23,10 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
                 int *clicked, enum MENU *choice, int *running);
 void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
                 SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
-                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, int *clicked, enum MENU *choice, int *running);
-void game_loop(SDL_Renderer *renderer, int *running);
+                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, enum MENU *choice, int *running);
+void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_frames, 
+                int *mouse_x, int *mouse_y, int *running, enum MENU *state);
+void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames);
 void ErrMessage(const char *message);
 void FPSLimit (unsigned int limit, unsigned const int desired_delta);
 
