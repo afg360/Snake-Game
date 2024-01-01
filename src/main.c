@@ -62,8 +62,12 @@ int main(int argv, char *arcg[]){
             case quit:
                 running = 0;
                 break;
+            default:
+                SDL_Log("An error occured... Unavailable menu item");
+                running = 0;
+                break;
         }
-        FPSLimit(start, desired_delta);
+        //FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
     

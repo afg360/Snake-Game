@@ -2,3 +2,4 @@
 bin/*.exe
 obj
 build
+CMakeLists.txt

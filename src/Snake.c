@@ -1,16 +1,12 @@
 #include <stdlib.h>
-//#include "Linked_List.h"//import doubly linked list instead
 #include <Snake.h>
 #include <Constants.h>
 
 Snake *spawn(){
-    Position position = {0,0};//WIDTH/2+1, HEIGHT/2+1};
+    Position position = {0,0};
     Snake *snake = malloc(sizeof(Snake));
     snake->body = malloc(sizeof(Position));
     snake->body[0] = position;
-    //snake->head = position;
-    //snake->tail = position;
-    //snake->lastPos = NULL; there is no lastPos
     snake->size = 1;
     snake->movement = South;
     return snake;

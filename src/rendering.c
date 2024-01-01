@@ -217,8 +217,6 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
         SDL_RenderCopy(renderer, play_unselected_texture, NULL, &play_rect);
         SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-        //SDL_RenderDrawRect(renderer, &play_rect);
-        //SDL_RenderDrawRect(renderer, &options_rect);
     }
 }
 
@@ -229,7 +227,7 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
     SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
 
-    TTF_Font *font = open_font(14);
+    TTF_Font *font = open_font(10);
     SDL_Color color = {245, 245, 245};
     SDL_Texture *easy_texture = create_font_texture(renderer, font, "Easy", color);
     SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
@@ -316,8 +314,6 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
         SDL_RenderCopy(renderer, med_texture, NULL, &medium);
         SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-        //SDL_RenderDrawRect(renderer, &play_rect);
-        //SDL_RenderDrawRect(renderer, &options_rect);
     }
 }
 
