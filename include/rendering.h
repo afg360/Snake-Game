@@ -19,15 +19,15 @@ void color_snake(Snake *snake, SDL_Renderer *renderer);
 void color_food(Food *food, SDL_Renderer *renderer);
 void check_event(Snake *snake, Food *food, SDL_Event *event, int *running);
 
-void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
+void options_menu(SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
                 int *clicked, SDL_Cursor *cursor, enum MENU *choice, int *running);
-void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
+void main_menu(SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
                 SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
                 SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, SDL_Cursor *cursor,
                 enum MENU *choice, int *running);
-void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_frames, 
+void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
                 int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state);
-void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames);
+void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames, enum MENU *state);
 void ErrMessage(const char *message);
 void FPSLimit (unsigned int limit, unsigned const int desired_delta);
 

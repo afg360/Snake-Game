@@ -117,7 +117,7 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
     }
 }
 
-void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
+void options_menu(SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
                 int *clicked, SDL_Cursor *cursor, enum MENU *choice, int *running){
     SDL_Rect title_rect = {WIDTH / 8, HEIGHT / 9, 
                     BOX_h, BOX_h};
@@ -162,7 +162,7 @@ void options_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Event event, i
 }
 
 
-void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
+void main_menu(SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
                 SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
                 SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, SDL_Cursor *cursor, enum MENU *choice, int *running){
     int clicked = 0;
@@ -218,15 +218,16 @@ void main_menu(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *title_te
     }
 }
 
-void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_frames, 
+void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
             int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state){
-    SDL_Rect easy = {WIDTH / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
-    SDL_Rect medium = {WIDTH * 3 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
-    SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 2 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect easy = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect medium = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
+    SDL_Rect rects[] = {easy, medium, hard, back};
 
     TTF_Font *font = open_font(10);
-    SDL_Color color = {245, 245, 245};
+    SDL_Color color = {220, 220, 220};
     SDL_Texture *easy_texture = create_font_texture(renderer, font, "Easy", color);
     SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
     SDL_Texture *hard_texture = create_font_texture(renderer, font, "Hard", color);
@@ -310,18 +311,17 @@ void level_menu(SDL_Window *window, SDL_Renderer *renderer, unsigned int *game_f
     }
     else{
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(renderer, &easy);
-        SDL_RenderFillRect(renderer, &medium);
-        SDL_RenderFillRect(renderer, &hard);
+        SDL_RenderFillRects(renderer, rects, 4);
         SDL_RenderCopy(renderer, easy_texture, NULL, &easy);
         SDL_RenderCopy(renderer, med_texture, NULL, &medium);
         SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderDrawRect(renderer, &back);
         SDL_SetCursor(SDL_GetDefaultCursor());
     }
 }
 
-void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames){
+void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state){
     Snake *snake = spawn();
     Food *food = initFood();
     unsigned const int desired_delta = 1000 / frames;
@@ -332,17 +332,21 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned const int frames){
         color_snake(snake, renderer);
 
         if (checkCollision(snake)){
-            printf("Game Over!\nScore: %d", score);
+            SDL_Log("Game Over!\nScore: %d\n", score);
             clearFood(food);
             clearSnake(snake);
-            *running = 0;
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
+            *state = level;
             break;
         }
 
         if (snake->body[0].x == food->x && snake->body[0].y == food->y){
             eat(snake);
             score++;
+            Food *old = food;
             food = initFood();
+            clearFood(old);
         }
         color_food(food, renderer);
         FPSLimit(SDL_GetTicks(), desired_delta);

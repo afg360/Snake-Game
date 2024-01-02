@@ -4,7 +4,7 @@
 #include <rendering.h>
 #include <Constants.h>
 
-int main(int argv, char *arcg[]){
+int main(int argc, char *argv[]){
     setup();
     TTF_Font *font = open_font(20);
     //TTF_Font *option_font = open_font(20);
@@ -29,8 +29,6 @@ int main(int argv, char *arcg[]){
     SDL_Rect options_rect = {WIDTH * 3 / 8, HEIGHT * 8 / 11, 
                     BOX_w, BOX_h};
 
-    //SDL_RenderDrawRect(renderer, &play_rect);
-    //SDL_RenderDrawRect(renderer, &options_rect);
     SDL_RenderCopy(renderer, title_texture, NULL, &title_location);
     SDL_RenderCopy(renderer, play_unselected_texture, NULL, &play_rect);
     SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
@@ -47,17 +45,17 @@ int main(int argv, char *arcg[]){
         SDL_Event event;
         switch (state){
             case menu:
-                main_menu(window, renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture,
+                main_menu(renderer, title_texture, play_selected_texture, play_unselected_texture, options_selected_texture,
                 options_unselected_texture, play_rect, options_rect, event, &mouse_x, &mouse_y, cursor, &state, &running);
                 break;
             case level:
-                level_menu(window, renderer, &game_frames, &mouse_x, &mouse_y, cursor, &running, &state);
+                level_menu(renderer, &game_frames, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running, MED_RATE);
+                game_loop(renderer, &running, game_frames, &state);
                 break;
             case options:
-                options_menu(window, renderer, event, &mouse_x, &mouse_y, &clicked, cursor, &state, &running);
+                options_menu(renderer, event, &mouse_x, &mouse_y, &clicked, cursor, &state, &running);
                 break;
             case quit:
                 running = 0;
@@ -67,7 +65,7 @@ int main(int argv, char *arcg[]){
                 running = 0;
                 break;
         }
-        //FPSLimit(start, desired_delta);
+        FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
     
