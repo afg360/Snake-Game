@@ -107,7 +107,6 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
                 }
             case SDL_QUIT:
                 *running = 0;
-                //SDL_RenderClear(renderer);
                 clearSnake(snake);
                 clearFood(food);
                 break;
@@ -220,6 +219,9 @@ void main_menu(SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *
 
 void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
             int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state){
+    //bug -> once we comeback to level screen, since the first thing
+    //is to go back at where the mouse clicked, it will never fully render the
+    //other rects
     SDL_Rect easy = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect medium = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
@@ -234,6 +236,15 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     TTF_CloseFont(font);
     SDL_Event event;
     int clicked = 0;
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRects(renderer, rects, 4);
+    SDL_RenderCopy(renderer, easy_texture, NULL, &easy);
+    SDL_RenderCopy(renderer, med_texture, NULL, &medium);
+    SDL_RenderCopy(renderer, hard_texture, NULL, &hard);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer, &back);
+    SDL_SetCursor(SDL_GetDefaultCursor());
+    //need to also get rid of rectangle if not there
 
     while (SDL_PollEvent(&event)){
         if (event.type == SDL_QUIT){
@@ -264,6 +275,8 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
             *game_frames = EASY_RATE;
             *state = game;
             SDL_SetCursor(SDL_GetDefaultCursor());
+            *mouse_x = -1;
+            *mouse_y = -1;
         }
     }
     else if (*mouse_x >= medium.x && *mouse_x <= medium.x + medium.w 
