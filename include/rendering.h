@@ -19,11 +19,9 @@ void color_snake(Snake *snake, SDL_Renderer *renderer);
 void color_food(Food *food, SDL_Renderer *renderer);
 void check_event(Snake *snake, Food *food, SDL_Event *event, int *running);
 
-void options_menu(SDL_Renderer *renderer, SDL_Event event, int *mouse_x, int *mouse_y, 
-                int *clicked, SDL_Cursor *cursor, enum MENU *choice, int *running);
-void main_menu(SDL_Renderer *renderer, SDL_Texture *title_texture, SDL_Texture *play_selected_texture,
-                SDL_Texture *play_unselected_texture, SDL_Texture *options_selected_texture, SDL_Texture *options_unselected_texture, 
-                SDL_Rect play_rect, SDL_Rect options_rect, SDL_Event event, int *mouse_x, int *mouse_y, SDL_Cursor *cursor,
+void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, 
+                SDL_Cursor *cursor, enum MENU *choice, int *running);
+void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *cursor,
                 enum MENU *choice, int *running);
 void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
                 int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state);
