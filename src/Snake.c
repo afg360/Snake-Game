@@ -64,6 +64,7 @@ void move(Snake *snake){
     }
 
 }
+
 void eat(Snake *snake){
     snake->size++;
     snake->body = realloc(snake->body, sizeof(Position)*snake->size);

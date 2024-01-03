@@ -4,3 +4,5 @@ obj
 build
 releases
 CMakeLists.txt
+src/.config
+options*

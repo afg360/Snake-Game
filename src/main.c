@@ -3,6 +3,7 @@
 #include <Food.h>
 #include <rendering.h>
 #include <Constants.h>
+//#include <options.h>
 
 int main(int argc, char *argv[]){
     setup();
@@ -41,7 +42,7 @@ int main(int argc, char *argv[]){
                 running = 0;
                 break;
         }
-        FPSLimit(start, desired_delta);
+        //FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
     

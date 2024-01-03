@@ -4,6 +4,7 @@
 #include <Constants.h>
 #include <utils.h>
 
+
 void setup(){
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
         SDL_Log("Error: Initialisation of SDL -> %s\n", SDL_GetError());
@@ -132,10 +133,14 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
     SDL_Rect options_rect = {WIDTH * 3 / 8, HEIGHT * 6 / 9, 
                     BOX_w, BOX_h};
 
+    SDL_Color back_color = {255, 255, 100};
+    TTF_Font *back_font = open_font(10);
+    SDL_Texture *back_texture = create_font_texture(renderer, back_font, "<=", back_color);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &title_rect);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer, &title_rect);
+    SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
     SDL_SetCursor(SDL_GetDefaultCursor());
 
     unsigned const int desired_delta = 1000 / MENU_RATE;
@@ -144,23 +149,22 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
         unsigned int start = SDL_GetTicks();
         int clicked = 0;
         while (SDL_PollEvent(&event)){
-            if (event.type == SDL_QUIT){
-                *running = 0;
-                break;
-            }
-            else if (event.type == SDL_MOUSEMOTION){
-                *mouse_x = event.motion.x;
-                *mouse_y = event.motion.y;
-            }
-            else if (event.type == SDL_MOUSEBUTTONDOWN){
-                clicked = 1;
+            switch (event.type){
+                case SDL_QUIT:
+                    *running = 0;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    clicked = 1;
+                    break;
             }
         }
+        SDL_GetMouseState(mouse_x, mouse_y);
         if (*mouse_x >= WIDTH * 1 / 8 && *mouse_x <= WIDTH * 1 / 8 + BOX_h
             && *mouse_y <= HEIGHT * 1 / 8 + BOX_h && *mouse_y >= HEIGHT * 1 / 8){
             // need error message if not 0
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, &title_rect);
+            SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
             SDL_SetCursor(cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -175,11 +179,14 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             SDL_RenderFillRect(renderer, &title_rect);
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderDrawRect(renderer, &title_rect);
+            SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
             SDL_SetCursor(SDL_GetDefaultCursor());
         }
         FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
+    SDL_DestroyTexture(back_texture);
+    TTF_CloseFont(back_font);
 }
 
 
@@ -201,10 +208,7 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
     SDL_Texture *play_selected_texture = create_font_texture(renderer, font, "Play", selected_color);
     SDL_Texture *options_unselected_texture = create_font_texture(renderer, font, "Options", unselected_color);
     SDL_Texture *options_selected_texture = create_font_texture(renderer, font, "Options", selected_color);
-
-    SDL_RenderCopy(renderer, title_texture, NULL, &title_location);
-    SDL_RenderCopy(renderer, play_unselected_texture, NULL, &play_rect);
-    SDL_RenderCopy(renderer, options_unselected_texture, NULL, &options_rect);
+    TTF_CloseFont(font);
 
     //SDL_Rect title_location = {WIDTH / 4, HEIGHT / 11, BOX_w * 2, BOX_h * 2};
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -222,17 +226,21 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
         int clicked = 0;
         SDL_Event event;
         while (SDL_PollEvent(&event)){
-            if (event.type == SDL_QUIT){
-                *running = 0;
-            }
-            else if (event.type == SDL_MOUSEMOTION){
-                *mouse_x = event.motion.x;
-                *mouse_y = event.motion.y;
-            }
-            else if (event.type == SDL_MOUSEBUTTONDOWN){
-                clicked = 1;
+            switch (event.type){
+                case SDL_QUIT:
+                    SDL_DestroyTexture(title_texture);
+                    SDL_DestroyTexture(play_selected_texture);
+                    SDL_DestroyTexture(play_unselected_texture);
+                    SDL_DestroyTexture(options_selected_texture);
+                    SDL_DestroyTexture(options_unselected_texture);
+                    *running = 0;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    clicked = 1;
+                    break;
             }
         }
+        SDL_GetMouseState(mouse_x, mouse_y);
         if (*mouse_x >= play_rect.x && *mouse_x <= play_rect.x + play_rect.w
             && *mouse_y <= play_rect.y + play_rect.h && *mouse_y >= play_rect.y){
             // need error message if not 0
@@ -275,12 +283,6 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
         FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
-    SDL_DestroyTexture(title_texture);
-    SDL_DestroyTexture(play_selected_texture);
-    SDL_DestroyTexture(play_unselected_texture);
-    SDL_DestroyTexture(options_selected_texture);
-    SDL_DestroyTexture(options_unselected_texture);
-    TTF_CloseFont(font);
 }
 
 void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
@@ -307,6 +309,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
     SDL_Texture *hard_texture = create_font_texture(renderer, font, "Hard", color);
     TTF_CloseFont(font);
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRects(renderer, fonts, 4);
     SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
@@ -331,15 +334,12 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                     SDL_DestroyTexture(hard_texture);
                     *running = 0;
                     break;
-                case SDL_MOUSEMOTION:
-                    *mouse_x = event.motion.x;
-                    *mouse_y = event.motion.y;
-                    break;
                 case SDL_MOUSEBUTTONDOWN:
                     clicked = 1;
                     break;
             }
         }
+        SDL_GetMouseState(mouse_x, mouse_y);
         if (*mouse_x >= easy.x && *mouse_x <= easy.x + easy.w
             && *mouse_y <= easy.y + easy.h && *mouse_y >= easy.y){
             // need error message if not 0
@@ -353,8 +353,6 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                 *game_frames = EASY_RATE;
                 *state = game;
                 SDL_SetCursor(SDL_GetDefaultCursor());
-                *mouse_x = -1;
-                *mouse_y = -1;
                 break;
             }
         }
