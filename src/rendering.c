@@ -90,19 +90,27 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
                 switch (event->key.keysym.sym){
                     case SDLK_UP:
                     case SDLK_w:
-                        snake->movement = North;
+                    //we will see if we keep it
+                        if (snake->movement != South || snake->size <= 2) snake->movement = North;
+                        //snake->movement = North;, perhaps in hardcore mode
                         continue;
                     case SDLK_DOWN:
                     case SDLK_s:
-                        snake->movement = South;
+                    //we will see if we keep it
+                        if (snake->movement != North || snake->size <= 2) snake->movement = South;
+                        //snake->movement = South;
                         continue;
                     case SDLK_RIGHT:
                     case SDLK_d:
-                        snake->movement = East;
+                    //we will see if we keep it
+                        if (snake->movement != West || snake->size <= 2) snake->movement = East;
+                        //snake->movement = East;
                         continue;
                     case SDLK_LEFT:
                     case SDLK_a:
-                        snake->movement = West;
+                    //we will see if we keep it
+                        if (snake->movement != East || snake->size <= 2) snake->movement = West;
+                        //snake->movement = West;
                         continue;
                     default: //previous direction
                         continue;
@@ -125,7 +133,7 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
 
 void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, 
                 SDL_Cursor *cursor, enum MENU *choice, int *running){
-    /* Add possibility to configure size of */
+    /* Add possibility to configure size of game grid/map*/
     SDL_Rect title_rect = {WIDTH / 8, HEIGHT / 9, 
                     BOX_h, BOX_h};
     SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 4 / 9, 
@@ -133,15 +141,16 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
     SDL_Rect options_rect = {WIDTH * 3 / 8, HEIGHT * 6 / 9, 
                     BOX_w, BOX_h};
 
+    TTF_Font *back_font = open_font(15);
     SDL_Color back_color = {255, 255, 100};
-    TTF_Font *back_font = open_font(10);
     SDL_Texture *back_texture = create_font_texture(renderer, back_font, "<=", back_color);
+    TTF_CloseFont(back_font);
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(renderer, &title_rect);
+    SDL_RenderCopy(renderer, back_texture, NULL, &options_rect);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderDrawRect(renderer, &title_rect);
-    SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
-    SDL_SetCursor(SDL_GetDefaultCursor());
 
     unsigned const int desired_delta = 1000 / MENU_RATE;
     SDL_Event event;
@@ -164,7 +173,6 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             // need error message if not 0
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, &title_rect);
-            SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
             SDL_SetCursor(cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -179,20 +187,18 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             SDL_RenderFillRect(renderer, &title_rect);
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderDrawRect(renderer, &title_rect);
-            SDL_RenderCopy(renderer, back_texture, NULL, &title_rect);
+            SDL_RenderCopy(renderer, back_texture, NULL, &options_rect);
             SDL_SetCursor(SDL_GetDefaultCursor());
         }
         FPSLimit(start, desired_delta);
         SDL_RenderPresent(renderer);
     }
     SDL_DestroyTexture(back_texture);
-    TTF_CloseFont(back_font);
 }
 
 
 void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *cursor, enum MENU *choice, int *running){
     TTF_Font *font = open_font(20);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_Rect title_location = {WIDTH / 4, HEIGHT / 11, BOX_w * 2, BOX_h * 2};
     SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 0.5, 
                     BOX_w, BOX_h};
@@ -321,11 +327,11 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     SDL_SetCursor(SDL_GetDefaultCursor());
     //need to also get rid of rectangle if not there
     SDL_Event event;
-    int clicked = 0;
     unsigned const int desired_delta = 1000 / MENU_RATE;
 
     while (*running){
         unsigned int start = SDL_GetTicks();
+        int clicked = 0;
         while (SDL_PollEvent(&event)){
             switch (event.type){
                 case SDL_QUIT:
