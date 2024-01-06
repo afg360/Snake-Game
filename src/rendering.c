@@ -82,50 +82,6 @@ void color_food(Food *food, SDL_Renderer *renderer){
     }
 }
 
-//take as argument a fxn. fxn is the switch statement (this one is same, others are repeated)
-void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
-    while (SDL_PollEvent(event)){
-        switch (event->type){
-            case SDL_KEYDOWN:
-                switch (event->key.keysym.sym){
-                    case SDLK_UP:
-                    case SDLK_w:
-                    //we will see if we keep it
-                        if (snake->movement != South || snake->size <= 2) snake->movement = North;
-                        //snake->movement = North;, perhaps in hardcore mode
-                        continue;
-                    case SDLK_DOWN:
-                    case SDLK_s:
-                    //we will see if we keep it
-                        if (snake->movement != North || snake->size <= 2) snake->movement = South;
-                        //snake->movement = South;
-                        continue;
-                    case SDLK_RIGHT:
-                    case SDLK_d:
-                    //we will see if we keep it
-                        if (snake->movement != West || snake->size <= 2) snake->movement = East;
-                        //snake->movement = East;
-                        continue;
-                    case SDLK_LEFT:
-                    case SDLK_a:
-                    //we will see if we keep it
-                        if (snake->movement != East || snake->size <= 2) snake->movement = West;
-                        //snake->movement = West;
-                        continue;
-                    default: //previous direction
-                        continue;
-                }
-            case SDL_QUIT:
-                *running = 0;
-                clearSnake(snake);
-                clearFood(food);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
 //make a fxn that does the rects filling for us. takes as arg an array for
 //SDL_rects, alongside color we want
 
@@ -134,23 +90,23 @@ void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
 void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, 
                 SDL_Cursor *cursor, enum MENU *choice, int *running){
     /* Add possibility to configure size of game grid/map*/
-    SDL_Rect title_rect = {WIDTH / 8, HEIGHT / 9, 
+    SDL_Rect back_rect = {WIDTH / 8, HEIGHT / 9, 
                     BOX_h, BOX_h};
     SDL_Rect play_rect = {WIDTH * 3 / 8, HEIGHT * 4 / 9, 
                     BOX_w, BOX_h};
     SDL_Rect options_rect = {WIDTH * 3 / 8, HEIGHT * 6 / 9, 
                     BOX_w, BOX_h};
 
-    TTF_Font *back_font = open_font(15);
-    SDL_Color back_color = {255, 255, 100};
-    SDL_Texture *back_texture = create_font_texture(renderer, back_font, "<=", back_color);
+    TTF_Font *back_font = open_font(10);
+    SDL_Color back_color = {220, 220, 220};
+    SDL_Texture *back_texture = create_font_texture(renderer, back_font, "Back", back_color);
     TTF_CloseFont(back_font);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &title_rect);
-    SDL_RenderCopy(renderer, back_texture, NULL, &options_rect);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer, &title_rect);
+    SDL_RenderFillRect(renderer, &back_rect);
+    SDL_RenderCopy(renderer, back_texture, NULL, &back_rect);
+    //SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+    //SDL_RenderDrawRect(renderer, &back_rect);
 
     unsigned const int desired_delta = 1000 / MENU_RATE;
     SDL_Event event;
@@ -172,7 +128,8 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             && *mouse_y <= HEIGHT * 1 / 8 + BOX_h && *mouse_y >= HEIGHT * 1 / 8){
             // need error message if not 0
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(renderer, &title_rect);
+            SDL_RenderFillRect(renderer, &back_rect);
+            SDL_RenderCopy(renderer, back_texture, NULL, &back_rect);
             SDL_SetCursor(cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -184,10 +141,10 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
         }
         else{
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(renderer, &title_rect);
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDrawRect(renderer, &title_rect);
-            SDL_RenderCopy(renderer, back_texture, NULL, &options_rect);
+            SDL_RenderFillRect(renderer, &back_rect);
+            //SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            //SDL_RenderDrawRect(renderer, &back_rect);
+            SDL_RenderCopy(renderer, back_texture, NULL, &back_rect);
             SDL_SetCursor(SDL_GetDefaultCursor());
         }
         FPSLimit(start, desired_delta);
@@ -299,21 +256,37 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     SDL_Rect easy = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect medium = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
     SDL_Rect rects[] = {easy, medium, hard};
+
+    SDL_Rect easy_big = {WIDTH / 8 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
+    SDL_Rect med_big = {WIDTH  * 7 / 16 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
+    SDL_Rect hard_big = {WIDTH  * 6 / 8 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
+    SDL_Rect rects_big[] = {easy_big, med_big, hard_big};
 
     //we could separate different rendring things, and make these font rects
     //as structs
     SDL_Rect easy_font = {WIDTH / 8, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
-    SDL_Rect hard_font = {WIDTH * 6 / 8, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
     SDL_Rect medium_font = {WIDTH * 7 / 16, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
-    SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
+    SDL_Rect hard_font = {WIDTH * 6 / 8, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
     SDL_Rect fonts[] = {easy_font, medium_font, hard_font, back};
+
+    SDL_Rect easy_big_font = {WIDTH / 8 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
+    SDL_Rect med_big_font = {WIDTH  * 7 / 16 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
+    SDL_Rect hard_big_font = {WIDTH * 6 / 8 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
+    SDL_Rect big_fonts[] = {easy_big_font, med_big_font, hard_big_font};
 
     TTF_Font *font = open_font(10);
     SDL_Color color = {220, 220, 220};
+    SDL_Color color_selected = {0, 0, 80};
     SDL_Texture *easy_texture = create_font_texture(renderer, font, "Easy", color);
     SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
     SDL_Texture *hard_texture = create_font_texture(renderer, font, "Hard", color);
+    SDL_Texture *back_texture = create_font_texture(renderer, font, "Back", color);
+
+    SDL_Texture *easy_selected_texture = create_font_texture(renderer, font, "Easy", color_selected);
+    SDL_Texture *med_selected_texture = create_font_texture(renderer, font, "Medium", color_selected);
+    SDL_Texture *hard_selected_texture = create_font_texture(renderer, font, "Hard", color_selected);
     TTF_CloseFont(font);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -321,8 +294,8 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
     SDL_RenderCopy(renderer, med_texture, NULL, &medium_font);
     SDL_RenderCopy(renderer, hard_texture, NULL, &hard_font);
+    SDL_RenderCopy(renderer, back_texture, NULL, &back);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer, &back);
     SDL_RenderDrawRects(renderer, rects, 3);
     SDL_SetCursor(SDL_GetDefaultCursor());
     //need to also get rid of rectangle if not there
@@ -338,6 +311,10 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                     SDL_DestroyTexture(easy_texture);
                     SDL_DestroyTexture(med_texture);
                     SDL_DestroyTexture(hard_texture);
+                    SDL_DestroyTexture(back_texture);
+                    SDL_DestroyTexture(easy_selected_texture);
+                    SDL_DestroyTexture(med_selected_texture);
+                    SDL_DestroyTexture(hard_selected_texture);
                     *running = 0;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
@@ -349,10 +326,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
         if (*mouse_x >= easy.x && *mouse_x <= easy.x + easy.w
             && *mouse_y <= easy.y + easy.h && *mouse_y >= easy.y){
             // need error message if not 0
-            SDL_SetRenderDrawColor(renderer, 190, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(renderer, &easy_font);
-            SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
-            SDL_SetCursor(cursor);
+            growing_animation(renderer, &easy_big, &easy_big_font, easy_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
@@ -365,10 +339,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
         else if (*mouse_x >= medium.x && *mouse_x <= medium.x + medium.w 
                 && *mouse_y <= medium.y + medium.h && *mouse_y >= medium.y){
             // need error message if not 0
-            SDL_SetRenderDrawColor(renderer, 190, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(renderer, &medium_font);
-            SDL_RenderCopy(renderer, med_texture, NULL, &medium_font);
-            SDL_SetCursor(cursor);
+            growing_animation(renderer, &med_big, &med_big_font, med_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
@@ -381,10 +352,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
         else if (*mouse_x > hard.x && *mouse_x <= hard.x + hard.w 
                 && *mouse_y <= hard.y + hard.h && *mouse_y >= hard.y){
             // need error message if not 0
-            SDL_SetRenderDrawColor(renderer, 190, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderFillRect(renderer, &hard_font);
-            SDL_RenderCopy(renderer, hard_texture, NULL, &hard_font);
-            SDL_SetCursor(cursor);
+            growing_animation(renderer, &hard_big, &hard_big_font, hard_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
@@ -399,6 +367,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
             // need error message if not 0
             SDL_SetRenderDrawColor(renderer, 190, 0, 0, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, &back);
+            SDL_RenderCopy(renderer, back_texture, NULL, &back);
             SDL_SetCursor(cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -410,12 +379,13 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
         }
         else{
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRects(renderer, rects_big, 3);
             SDL_RenderFillRects(renderer, fonts, 4);
             SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
             SDL_RenderCopy(renderer, med_texture, NULL, &medium_font);
             SDL_RenderCopy(renderer, hard_texture, NULL, &hard_font);
+            SDL_RenderCopy(renderer, back_texture, NULL, &back);
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-            SDL_RenderDrawRect(renderer, &back);
             SDL_RenderDrawRects(renderer, rects, 3);
             SDL_SetCursor(SDL_GetDefaultCursor());
         }
@@ -424,11 +394,24 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     }
 }
 
-void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state){
+void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area, 
+            SDL_Rect *pfont_area, SDL_Texture *font_texture, SDL_Cursor *cursor){
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, prect_area);
+    SDL_SetRenderDrawColor(renderer, 190, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer, prect_area);
+    SDL_RenderFillRect(renderer, pfont_area);
+    SDL_RenderCopy(renderer, font_texture, NULL, pfont_area);
+    SDL_SetCursor(cursor);
+}
+
+
+void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state, void (*pause_loop)(SDL_Renderer *, int *)){
     Snake *snake = spawn();
     Food *food = initFood();
     unsigned const int desired_delta = 1000 / frames;
     int score = 0;
+    int pause_scr = 0;
     move(snake);
     while (*running){
         SDL_Event event;
@@ -443,7 +426,6 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
             *state = level;
             break;
         }
-
         if (snake->body[0].x == food->x && snake->body[0].y == food->y){
             eat(snake);
             score++;
@@ -453,7 +435,54 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
         }
         color_food(food, renderer);
         FPSLimit(SDL_GetTicks(), desired_delta);
-        check_event(snake, food, &event, running);
+        while (SDL_PollEvent(&event)){
+            switch (event.type){
+                case SDL_KEYDOWN:
+                    switch (event.key.keysym.sym){
+                        case SDLK_UP:
+                        case SDLK_w:
+                        //we will see if we keep it
+                            if (snake->movement != South || snake->size <= 2) snake->movement = North;
+                            //snake->movement = North;, perhaps in hardcore mode
+                            continue;
+                        case SDLK_DOWN:
+                        case SDLK_s:
+                        //we will see if we keep it
+                            if (snake->movement != North || snake->size <= 2) snake->movement = South;
+                            //snake->movement = South;
+                            continue;
+                        case SDLK_RIGHT:
+                        case SDLK_d:
+                        //we will see if we keep it
+                            if (snake->movement != West || snake->size <= 2) snake->movement = East;
+                            //snake->movement = East;
+                            continue;
+                        case SDLK_LEFT:
+                        case SDLK_a:
+                        //we will see if we keep it
+                            if (snake->movement != East || snake->size <= 2) snake->movement = West;
+                            //snake->movement = West;
+                            continue;
+                        case SDLK_p:
+                        case SDLK_ESCAPE:
+                            pause_scr = 1;
+                            pause_loop(renderer, running);
+                            break;
+                        default: //previous direction
+                            continue;
+                    }
+                case SDL_QUIT:
+                    *running = 0;
+                    clearSnake(snake);
+                    clearFood(food);
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (pause_scr){
+            pause_scr = 0;
+        }
         FPSLimit(SDL_GetTicks(), desired_delta);
         SDL_RenderPresent(renderer);
         if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for snake
@@ -461,6 +490,39 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
         }
         SDL_RenderClear(renderer);
         move(snake);
+    }
+}
+
+//take as argument a fxn. fxn is the switch statement (this one is same, others are repeated)
+void check_event(Snake *snake, Food *food, SDL_Event *event, int *running){
+}
+
+void pause_loop(SDL_Renderer *renderer, int *running){
+    SDL_Texture *game_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 
+                                WIDTH, HEIGHT);
+    SDL_SetTextureAlphaMod(game_texture, 50);
+    SDL_SetRenderTarget(renderer, game_texture);
+    //SDL_SetRenderDrawColor(renderer, 0,0,0, 100);
+    //SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+    int leave = 0;
+    while(!leave){
+        SDL_Event event;
+        while(SDL_PollEvent(&event)){
+            switch(event.type){
+                case SDL_KEYDOWN:
+                switch(event.key.keysym.sym){
+                    case SDLK_ESCAPE:
+                    case SDLK_p:
+                        leave = 1;
+                        break;
+                }
+                case SDL_QUIT:
+                    *running = 0;
+                    leave = 1;
+                    break;
+            }
+        }
     }
 }
 

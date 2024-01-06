@@ -5,7 +5,7 @@
 
 Food *initFood(){
     Food *food = malloc(sizeof(Food));
-    srand(clock());
+    srand(clock() * time(NULL));
     int x = rand()%(WIDTH)/PIXEL_UNIT;
     srand(clock());
     int y = rand()%(HEIGHT)/PIXEL_UNIT;

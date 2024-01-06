@@ -4,5 +4,12 @@ obj
 build
 releases
 CMakeLists.txt
+include/configure*
+include/options*
+include/colors*
 src/.config
-options*
+src/options*
+src/configure*
+src/colors*
+src/test*
+todo
