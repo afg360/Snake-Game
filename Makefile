@@ -1,6 +1,6 @@
 INCLUDE = include
-libs = -lmingw32 -lSDL2main -lSDL2 
-dyn = -L bin -lSDL2_ttf
+libs =-lmingw32 -lSDL2main -lSDL2 
+dyn =-L bin -lSDL2_ttf
 
 all: obj\main.o obj\Snake.o obj\Food.o obj\utils.o obj\rendering.o
 	gcc $^ -I $(INCLUDE) -L lib $(libs) $(dyn) -o .\bin\Snake_Game 

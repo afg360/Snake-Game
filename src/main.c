@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
                 level_menu(renderer, &game_frames, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running, game_frames, &state, pause_loop);
+                game_loop(renderer, &running, game_frames, &state);
                 break;
             //case pause:
             //    pause_loop(renderer, &running);

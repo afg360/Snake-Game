@@ -44,27 +44,36 @@ SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font *font, const c
     return texture;
 }
 
+SDL_Texture **create_font_textures(SDL_Renderer *renderer, const char *text[], int size, SDL_Color colors[], int color_size);
+
+void destroy_textures(SDL_Texture *textures_arr[], const int size){
+    for (int i = 0; i < size; i++){
+        SDL_DestroyTexture(textures_arr[i]);
+    }
+}
+
+void set_draw_color(SDL_Renderer *renderer, int r, int g, int b, int a, const char *message){
+    if (SDL_SetRenderDrawColor(renderer, r, g, b, a) != 0){
+        //may need to destroy stuff before leaving
+        ErrMessage(message);
+    }
+}
+
 void color_snake(Snake *snake, SDL_Renderer *renderer){
-        if (SDL_SetRenderDrawColor(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-            ErrMessage("Error: Changing color for the render");
-        }
+        set_draw_color(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
         SDL_Rect snake_part = {snake->body[0].x, snake->body[0].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
         if (SDL_RenderFillRect(renderer, &snake_part) != 0){
             ErrMessage("Error: Impossible to color a rectangle");
         }
         if (snake->size > 1){
             for (int i = 1; i<snake->size - 1; i++){
-                if (SDL_SetRenderDrawColor(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-                    ErrMessage("Error: Changing color for the render");
-                }
+                set_draw_color(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE, "Could not color snake body");//make blue color for head
                 SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
                 if (SDL_RenderFillRect(renderer, &snake_part) != 0){
                     ErrMessage("Error: Impossible to color a rectangle");
                 }
             }
-            if (SDL_SetRenderDrawColor(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE) != 0){//make blue color for head
-                ErrMessage("Error: Changing color for the render");
-            }
+            set_draw_color(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE, "Could not color snake head");//make blue color for head
             SDL_Rect snake_part = {snake->body[snake->size-1].x, snake->body[snake->size-1].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
             if (SDL_RenderFillRect(renderer, &snake_part) != 0){
                 ErrMessage("Error: Impossible to color a rectangle");
@@ -73,9 +82,7 @@ void color_snake(Snake *snake, SDL_Renderer *renderer){
 }
 
 void color_food(Food *food, SDL_Renderer *renderer){
-    if (SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for food
-        ErrMessage("Error: Changing color for the render");
-    }
+    set_draw_color(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");//make red color for food
     SDL_Rect food_rec = {food->x, food->y, PIXEL_UNIT, PIXEL_UNIT};
     if (SDL_RenderFillRect(renderer, &food_rec) != 0){
             ErrMessage("Error: Impossible to color a rectangle");
@@ -100,6 +107,8 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
     TTF_Font *back_font = open_font(10);
     SDL_Color back_color = {220, 220, 220};
     SDL_Texture *back_texture = create_font_texture(renderer, back_font, "Back", back_color);
+    SDL_Texture *textures_arr[] = {back_texture};
+    const int size = 1;
     TTF_CloseFont(back_font);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -117,6 +126,7 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             switch (event.type){
                 case SDL_QUIT:
                     *running = 0;
+                    destroy_textures(textures_arr, size);
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     clicked = 1;
@@ -127,12 +137,12 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
         if (*mouse_x >= WIDTH * 1 / 8 && *mouse_x <= WIDTH * 1 / 8 + BOX_h
             && *mouse_y <= HEIGHT * 1 / 8 + BOX_h && *mouse_y >= HEIGHT * 1 / 8){
             // need error message if not 0
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+            set_draw_color(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE, "Could not color food!");
             SDL_RenderFillRect(renderer, &back_rect);
             SDL_RenderCopy(renderer, back_texture, NULL, &back_rect);
             SDL_SetCursor(cursor);
             if (clicked){
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+                set_draw_color(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE, "Could not set background color");
                 SDL_RenderClear(renderer);
                 *choice = menu;
                 SDL_SetCursor(SDL_GetDefaultCursor());
@@ -140,7 +150,7 @@ void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y,
             }
         }
         else{
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+            set_draw_color(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE, "Could not set background color");
             SDL_RenderFillRect(renderer, &back_rect);
             //SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
             //SDL_RenderDrawRect(renderer, &back_rect);
@@ -165,12 +175,18 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
     SDL_Color title_color = {0, 220, 80};
     SDL_Color unselected_color = {255, 0, 0};
     SDL_Color selected_color = {0, 0, 80};
+    //SDL_Color colors[] = {{0, 220, 80}, {255, 0, 0}, {0, 0, 80}};
+    //const char *text[] = {"Snake", "Play", "Options"};
+    //SDL_Texture *texture_arrs[] = create_font_textures(renderer, text, 3, colors, 3);
 
     SDL_Texture *title_texture = create_font_texture(renderer, font, "Snake", title_color);
     SDL_Texture *play_unselected_texture = create_font_texture(renderer, font, "Play", unselected_color);
     SDL_Texture *play_selected_texture = create_font_texture(renderer, font, "Play", selected_color);
     SDL_Texture *options_unselected_texture = create_font_texture(renderer, font, "Options", unselected_color);
     SDL_Texture *options_selected_texture = create_font_texture(renderer, font, "Options", selected_color);
+    SDL_Texture *textures_arr[] = {title_texture, play_unselected_texture, play_selected_texture, 
+                                options_unselected_texture, options_selected_texture};
+    const int size = 5;
     TTF_CloseFont(font);
 
     //SDL_Rect title_location = {WIDTH / 4, HEIGHT / 11, BOX_w * 2, BOX_h * 2};
@@ -191,11 +207,7 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
         while (SDL_PollEvent(&event)){
             switch (event.type){
                 case SDL_QUIT:
-                    SDL_DestroyTexture(title_texture);
-                    SDL_DestroyTexture(play_selected_texture);
-                    SDL_DestroyTexture(play_unselected_texture);
-                    SDL_DestroyTexture(options_selected_texture);
-                    SDL_DestroyTexture(options_unselected_texture);
+                    destroy_textures(textures_arr, size);
                     *running = 0;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
@@ -215,6 +227,7 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
                 SDL_RenderClear(renderer);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 *choice = level;
+                destroy_textures(textures_arr, size);
                 break;
             }
         }
@@ -229,6 +242,7 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
                 SDL_RenderClear(renderer);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 *choice = options;
+                destroy_textures(textures_arr, size);
                 break;
             }
         }
@@ -254,45 +268,48 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
     //is to go back at where the mouse clicked, it will never fully render the
     //other rects
     SDL_Rect easy = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
-    SDL_Rect medium = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect normal = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
-    SDL_Rect rects[] = {easy, medium, hard};
+    SDL_Rect rects[] = {easy, normal, hard};
 
     SDL_Rect easy_big = {WIDTH / 8 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
-    SDL_Rect med_big = {WIDTH  * 7 / 16 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
+    SDL_Rect norm_big = {WIDTH  * 7 / 16 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
     SDL_Rect hard_big = {WIDTH  * 6 / 8 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
-    SDL_Rect rects_big[] = {easy_big, med_big, hard_big};
+    SDL_Rect rects_big[] = {easy_big, norm_big, hard_big};
 
     //we could separate different rendring things, and make these font rects
     //as structs
     SDL_Rect easy_font = {WIDTH / 8, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
-    SDL_Rect medium_font = {WIDTH * 7 / 16, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
+    SDL_Rect normal_font = {WIDTH * 7 / 16, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
     SDL_Rect hard_font = {WIDTH * 6 / 8, HEIGHT * 4 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4 * 1 / 3};
-    SDL_Rect fonts[] = {easy_font, medium_font, hard_font, back};
+    SDL_Rect fonts[] = {easy_font, normal_font, hard_font, back};
 
     SDL_Rect easy_big_font = {WIDTH / 8 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
-    SDL_Rect med_big_font = {WIDTH  * 7 / 16 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
+    SDL_Rect norm_big_font = {WIDTH  * 7 / 16 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
     SDL_Rect hard_big_font = {WIDTH * 6 / 8 - 10, HEIGHT * 4 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 * 1 / 3 + 10};
-    SDL_Rect big_fonts[] = {easy_big_font, med_big_font, hard_big_font};
+    SDL_Rect big_fonts[] = {easy_big_font, norm_big_font, hard_big_font};
 
     TTF_Font *font = open_font(10);
     SDL_Color color = {220, 220, 220};
     SDL_Color color_selected = {0, 0, 80};
     SDL_Texture *easy_texture = create_font_texture(renderer, font, "Easy", color);
-    SDL_Texture *med_texture = create_font_texture(renderer, font, "Medium", color);
+    SDL_Texture *norm_texture = create_font_texture(renderer, font, "normal", color);
     SDL_Texture *hard_texture = create_font_texture(renderer, font, "Hard", color);
     SDL_Texture *back_texture = create_font_texture(renderer, font, "Back", color);
 
     SDL_Texture *easy_selected_texture = create_font_texture(renderer, font, "Easy", color_selected);
-    SDL_Texture *med_selected_texture = create_font_texture(renderer, font, "Medium", color_selected);
+    SDL_Texture *norm_selected_texture = create_font_texture(renderer, font, "normal", color_selected);
     SDL_Texture *hard_selected_texture = create_font_texture(renderer, font, "Hard", color_selected);
+    SDL_Texture *textures_arr[] = {easy_texture, norm_texture, hard_texture, back_texture, 
+                                easy_selected_texture, norm_selected_texture, hard_selected_texture};
+    const int size = 7;
     TTF_CloseFont(font);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRects(renderer, fonts, 4);
     SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
-    SDL_RenderCopy(renderer, med_texture, NULL, &medium_font);
+    SDL_RenderCopy(renderer, norm_texture, NULL, &normal_font);
     SDL_RenderCopy(renderer, hard_texture, NULL, &hard_font);
     SDL_RenderCopy(renderer, back_texture, NULL, &back);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -308,13 +325,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
         while (SDL_PollEvent(&event)){
             switch (event.type){
                 case SDL_QUIT:
-                    SDL_DestroyTexture(easy_texture);
-                    SDL_DestroyTexture(med_texture);
-                    SDL_DestroyTexture(hard_texture);
-                    SDL_DestroyTexture(back_texture);
-                    SDL_DestroyTexture(easy_selected_texture);
-                    SDL_DestroyTexture(med_selected_texture);
-                    SDL_DestroyTexture(hard_selected_texture);
+                    destroy_textures(textures_arr, size);
                     *running = 0;
                     break;
                 case SDL_MOUSEBUTTONDOWN:
@@ -332,19 +343,21 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                 SDL_RenderClear(renderer);
                 *game_frames = EASY_RATE;
                 *state = game;
+                destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
         }
-        else if (*mouse_x >= medium.x && *mouse_x <= medium.x + medium.w 
-                && *mouse_y <= medium.y + medium.h && *mouse_y >= medium.y){
+        else if (*mouse_x >= normal.x && *mouse_x <= normal.x + normal.w 
+                && *mouse_y <= normal.y + normal.h && *mouse_y >= normal.y){
             // need error message if not 0
-            growing_animation(renderer, &med_big, &med_big_font, med_selected_texture, cursor);
+            growing_animation(renderer, &norm_big, &norm_big_font, norm_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
-                *game_frames = MED_RATE;
+                *game_frames = NORM_RATE;
                 *state = game;
+                destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
@@ -358,6 +371,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                 SDL_RenderClear(renderer);
                 *game_frames = HARD_RATE;
                 *state = game;
+                destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
@@ -373,6 +387,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
                 *state = menu;
+                destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
@@ -382,7 +397,7 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
             SDL_RenderFillRects(renderer, rects_big, 3);
             SDL_RenderFillRects(renderer, fonts, 4);
             SDL_RenderCopy(renderer, easy_texture, NULL, &easy_font);
-            SDL_RenderCopy(renderer, med_texture, NULL, &medium_font);
+            SDL_RenderCopy(renderer, norm_texture, NULL, &normal_font);
             SDL_RenderCopy(renderer, hard_texture, NULL, &hard_font);
             SDL_RenderCopy(renderer, back_texture, NULL, &back);
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
@@ -406,12 +421,11 @@ void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area,
 }
 
 
-void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state, void (*pause_loop)(SDL_Renderer *, int *)){
+void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state){
     Snake *snake = spawn();
     Food *food = initFood();
     unsigned const int desired_delta = 1000 / frames;
     int score = 0;
-    int pause_scr = 0;
     move(snake);
     while (*running){
         SDL_Event event;
@@ -465,9 +479,8 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
                             continue;
                         case SDLK_p:
                         case SDLK_ESCAPE:
-                            pause_scr = 1;
                             pause_loop(renderer, running);
-                            break;
+                            continue;
                         default: //previous direction
                             continue;
                     }
@@ -480,14 +493,9 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
                     break;
             }
         }
-        if (pause_scr){
-            pause_scr = 0;
-        }
         FPSLimit(SDL_GetTicks(), desired_delta);
         SDL_RenderPresent(renderer);
-        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE) != 0){//make red color for snake
-            ErrMessage("Error: Changing color for the render");
-        }
+        set_draw_color(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE, "Could not set black background color");//make red color for snake
         SDL_RenderClear(renderer);
         move(snake);
     }
@@ -511,12 +519,13 @@ void pause_loop(SDL_Renderer *renderer, int *running){
         while(SDL_PollEvent(&event)){
             switch(event.type){
                 case SDL_KEYDOWN:
-                switch(event.key.keysym.sym){
-                    case SDLK_ESCAPE:
-                    case SDLK_p:
-                        leave = 1;
-                        break;
-                }
+                    switch(event.key.keysym.sym){
+                        case SDLK_ESCAPE:
+                        case SDLK_p:
+                            leave = 1;
+                            break;
+                    }
+                break;
                 case SDL_QUIT:
                     *running = 0;
                     leave = 1;
@@ -524,9 +533,11 @@ void pause_loop(SDL_Renderer *renderer, int *running){
             }
         }
     }
+    SDL_DestroyTexture(game_texture);
 }
 
 void ErrMessage(const char *message){
+    //possible memory leaks to address
     SDL_Log("%s -> %s\n", message, SDL_GetError());
     SDL_Quit();
     exit(EXIT_FAILURE);
