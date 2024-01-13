@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <rendering.h>
-#include <Constants.h>
+#include <constants.h>
 #include <utils.h>
 
 
@@ -262,16 +262,16 @@ void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *c
     }
 }
 
-void level_menu(SDL_Renderer *renderer, unsigned int *game_frames, 
+void level_menu(SDL_Renderer *renderer, enum DIFF *diff, 
             int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state){
     //bug -> once we comeback to level screen, since the first thing
     //is to go back at where the mouse clicked, it will never fully render the
     //other rects
-    SDL_Rect easy = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
-    SDL_Rect normal = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
-    SDL_Rect hard = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect easy_rect = {WIDTH / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect normal_rect = {WIDTH * 7 / 16, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
+    SDL_Rect hard_rect = {WIDTH * 6 / 8, HEIGHT * 3 / 9, BOX_w * 2 / 4, BOX_w * 2 / 4};
     SDL_Rect back = {WIDTH / 8, HEIGHT  / 9, BOX_h, BOX_h };
-    SDL_Rect rects[] = {easy, normal, hard};
+    SDL_Rect rects[] = {easy_rect, normal_rect, hard_rect};
 
     SDL_Rect easy_big = {WIDTH / 8 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
     SDL_Rect norm_big = {WIDTH  * 7 / 16 - 10, HEIGHT * 3 / 9 - 5, BOX_w * 2 / 4 + 20, BOX_w * 2 / 4 + 10};
@@ -334,42 +334,42 @@ void level_menu(SDL_Renderer *renderer, unsigned int *game_frames,
             }
         }
         SDL_GetMouseState(mouse_x, mouse_y);
-        if (*mouse_x >= easy.x && *mouse_x <= easy.x + easy.w
-            && *mouse_y <= easy.y + easy.h && *mouse_y >= easy.y){
+        if (*mouse_x >= easy_rect.x && *mouse_x <= easy_rect.x + easy_rect.w
+            && *mouse_y <= easy_rect.y + easy_rect.h && *mouse_y >= easy_rect.y){
             // need error message if not 0
             growing_animation(renderer, &easy_big, &easy_big_font, easy_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
-                *game_frames = EASY_RATE;
+                *diff = easy;
                 *state = game;
                 destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
         }
-        else if (*mouse_x >= normal.x && *mouse_x <= normal.x + normal.w 
-                && *mouse_y <= normal.y + normal.h && *mouse_y >= normal.y){
+        else if (*mouse_x >= normal_rect.x && *mouse_x <= normal_rect.x + normal_rect.w 
+                && *mouse_y <= normal_rect.y + normal_rect.h && *mouse_y >= normal_rect.y){
             // need error message if not 0
             growing_animation(renderer, &norm_big, &norm_big_font, norm_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
-                *game_frames = NORM_RATE;
+                *diff = norm;
                 *state = game;
                 destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
                 break;
             }
         }
-        else if (*mouse_x > hard.x && *mouse_x <= hard.x + hard.w 
-                && *mouse_y <= hard.y + hard.h && *mouse_y >= hard.y){
+        else if (*mouse_x > hard_rect.x && *mouse_x <= hard_rect.x + hard_rect.w 
+                && *mouse_y <= hard_rect.y + hard_rect.h && *mouse_y >= hard_rect.y){
             // need error message if not 0
             growing_animation(renderer, &hard_big, &hard_big_font, hard_selected_texture, cursor);
             if (clicked){
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
                 SDL_RenderClear(renderer);
-                *game_frames = HARD_RATE;
+                *diff = hard;
                 *state = game;
                 destroy_textures(textures_arr, size);
                 SDL_SetCursor(SDL_GetDefaultCursor());
@@ -421,10 +421,33 @@ void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area,
 }
 
 
-void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum MENU *state){
+void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores){
     Snake *snake = spawn();
     Food *food = initFood();
-    unsigned const int desired_delta = 1000 / frames;
+    unsigned int desired_delta;
+    TTF_Font *font = open_font(10);
+    SDL_Texture *score_texture;
+    //must have a rectangle that is dynamic... if score increases too much, rect can adjust
+    SDL_Color color = {255, 255, 255, 100};
+    char buffer[50];
+    switch (diff){
+        case easy:
+            desired_delta = 1000 / EASY_RATE;
+            sprintf(buffer, "%d", scores->easy);
+            score_texture = create_font_texture(renderer, font, buffer, color);
+            break;
+        case norm:
+            desired_delta = 1000 / NORM_RATE;
+            sprintf(buffer, "%d", scores->norm);
+            score_texture = create_font_texture(renderer, font, buffer, color);
+            break;
+        case hard:
+            desired_delta = 1000 / HARD_RATE;
+            sprintf(buffer, "%d", scores->hard);
+            score_texture = create_font_texture(renderer, font, buffer, color);
+            break;
+    }
+    TTF_CloseFont(font);
     int score = 0;
     move(snake);
     while (*running){
@@ -499,6 +522,7 @@ void game_loop(SDL_Renderer *renderer, int *running, unsigned int frames, enum M
         SDL_RenderClear(renderer);
         move(snake);
     }
+    SDL_DestroyTexture(score_texture);
 }
 
 //take as argument a fxn. fxn is the switch statement (this one is same, others are repeated)

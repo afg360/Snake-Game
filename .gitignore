@@ -7,7 +7,9 @@ CMakeLists.txt
 #include/configure*
 include/options*
 include/colors*
+.config
 src/.config
+src/del*
 src/options*
 src/configure.exe
 src/colors*

@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <Snake.h>
-#include <Constants.h>
+#include <snake.h>
+#include <constants.h>
 
 Snake *spawn(){
     Position position = {0,0};

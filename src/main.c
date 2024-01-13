@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <Food.h>
+#include <food.h>
 #include <rendering.h>
-#include <Constants.h>
+#include <constants.h>
 //#include <options.h>
 
 int main(int argc, char *argv[]){
@@ -13,9 +13,11 @@ int main(int argc, char *argv[]){
 
     int running = 1;
     enum MENU state = menu;
+    High_Scores scores = check_score();
+    printf("%d, %d, %d\n", scores.easy, scores.norm, scores.hard);
     SDL_Cursor *cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     unsigned const int desired_delta = 1000 / MENU_RATE;
-    unsigned int game_frames;
+    enum DIFF difficulty;
 
     while (running){
         unsigned int start = SDL_GetTicks();
@@ -26,10 +28,10 @@ int main(int argc, char *argv[]){
                 main_menu(renderer, &mouse_x, &mouse_y, cursor, &state, &running);
                 break;
             case level:
-                level_menu(renderer, &game_frames, &mouse_x, &mouse_y, cursor, &running, &state);
+                level_menu(renderer, &difficulty, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running, game_frames, &state);
+                game_loop(renderer, &running, difficulty, &state, &scores);
                 break;
             //case pause:
             //    pause_loop(renderer, &running);

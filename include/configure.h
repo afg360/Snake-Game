@@ -17,7 +17,7 @@ typedef struct high_scores{
 
 void reset_buffer(char *buffer, int size);
 const char *create_config_folder();
-High_Scores check_score(const char *path);
+High_Scores check_score();
 int save_highscores(High_Scores *old, High_Scores *update, const char *pathname);
 
 #endif

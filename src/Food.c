@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
-#include <Food.h>
-#include <Constants.h>
+#include <food.h>
+#include <constants.h>
 
 Food *initFood(){
     Food *food = malloc(sizeof(Food));

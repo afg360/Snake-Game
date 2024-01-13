@@ -46,7 +46,8 @@ const char *create_config_folder(){
     } 
 }
 
-High_Scores check_score(const char *path){
+High_Scores check_score(){
+    const char *path = create_config_folder();
     char path_buffer[strlen(path) + 8];
     strcpy(path_buffer, path);
     strcat(path_buffer, "\\.score");
@@ -79,6 +80,7 @@ High_Scores check_score(const char *path){
         }
         High_Scores scores;
         char data[50];
+        reset_buffer(data, 50);
         while(!feof(score)){
             fgets(line, 50, score);
             char *tmp;
@@ -158,7 +160,6 @@ High_Scores check_score(const char *path){
                 fclose(score);
                 exit(1);
             }
-            reset_buffer(data, 50);
         }
         return scores;
     }
@@ -189,7 +190,8 @@ int save_highscores(High_Scores *old, High_Scores *update, const char *pathname)
             fgets(line, 100, file);
         }
         else{
-            puts("Syntax error");
+            printf("Syntax error: %s\n", line);
+            return 2;
         }
     }
     else{
@@ -211,7 +213,8 @@ int save_highscores(High_Scores *old, High_Scores *update, const char *pathname)
             fgets(line, 100, file);
         }
         else{
-            puts("Syntax error");
+            printf("Syntax error: %s\n", line);
+            return 2;
         }
     }
     else{
@@ -229,19 +232,10 @@ int save_highscores(High_Scores *old, High_Scores *update, const char *pathname)
             fprintf(file, w_hard, update->hard);
         }
         else{
-            puts("Syntax error");
+            printf("Syntax error: %s\n", line);
+            return 2;
         }
     }
     fclose(file);
-    return 0;
-}
-
-
-int main(int argc, char *argv[]){
-    const char *path = create_config_folder();
-    High_Scores high_score = check_score(path);
-    High_Scores n = {7, 6, 5};
-    //printf("%d, %d, %d\n", high_score.easy, high_score.norm, high_score.hard);
-    save_highscores(&high_score, &n, "./.config/.score");
     return 0;
 }
