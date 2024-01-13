@@ -18,7 +18,6 @@ SDL_Texture *create_font_texture(SDL_Renderer *renderer, TTF_Font *font, const c
 void color_snake(Snake *snake, SDL_Renderer *renderer);
 void color_food(Food *food, SDL_Renderer *renderer);
 void check_event(Snake *snake, Food *food, SDL_Event *event, int *running);
-
 void options_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, 
                 SDL_Cursor *cursor, enum MENU *choice, int *running);
 void main_menu(SDL_Renderer *renderer, int *mouse_x, int *mouse_y, SDL_Cursor *cursor,

@@ -44,9 +44,7 @@ void move(Snake *snake){
                     snake->body[i] = prev;
                     prev = curr;
                 }
-                else{
-                    snake->body[i].x+= PIXEL_UNIT;
-                }
+                else snake->body[i].x+= PIXEL_UNIT;
             }
             break;
         case West:
@@ -56,9 +54,7 @@ void move(Snake *snake){
                     snake->body[i] = prev;
                     prev = curr;
                 }
-                else{
-                     snake->body[i].x-=PIXEL_UNIT;
-                    }
+                else snake->body[i].x-=PIXEL_UNIT;
             }
             break;
     }
@@ -72,13 +68,9 @@ void eat(Snake *snake){
 }
 
 bool checkCollision(Snake *snake){
-    if (snake->body[0].x < 0 || snake->body[0].x >= WIDTH || snake->body[0].y < 0 || snake->body[0].y >= HEIGHT){
-            return true;
-        }
+    if (snake->body[0].x < 0 || snake->body[0].x >= WIDTH || snake->body[0].y < 0 || snake->body[0].y >= HEIGHT) return true;
     for (int i = 1; i<snake->size; i++){
-        if (snake->body[0].x == snake->body[i].x && snake->body[0].y == snake->body[i].y){
-            return true;
-        }
+        if (snake->body[0].x == snake->body[i].x && snake->body[0].y == snake->body[i].y) return true;
     }
     return false;
 }

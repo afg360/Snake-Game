@@ -24,6 +24,9 @@ obj\utils.o: src\utils.c
 	gcc $^ -c -I $(INCLUDE) -o $@
 
 clean:
+	rm *.o
+	rm .\obj\*.o
+	rm .\bin\*.exe
 	del *.o
 	del .\obj\*.o
 	del .\bin\*.exe
