@@ -31,7 +31,7 @@ void level_menu(SDL_Renderer *renderer, enum DIFF *diff,
                 int *mouse_x, int *mouse_y, SDL_Cursor *cursor, int *running, enum MENU *state);
 void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area, 
             SDL_Rect *pfont_area, SDL_Texture *font_texture, SDL_Cursor *cursor);
-void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores);
+void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores, const char *pathname);
 void pause_loop(SDL_Renderer *renderer, int *running);
 void ErrMessage(const char *message);
 void FPSLimit (unsigned int limit, unsigned const int desired_delta);

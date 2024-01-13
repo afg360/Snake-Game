@@ -46,8 +46,7 @@ const char *create_config_folder(){
     } 
 }
 
-High_Scores check_score(){
-    const char *path = create_config_folder();
+High_Scores check_score(const char *path){
     char path_buffer[strlen(path) + 8];
     strcpy(path_buffer, path);
     strcat(path_buffer, "\\.score");
@@ -165,8 +164,15 @@ High_Scores check_score(){
     }
 }
 
+void helper(const int score){
+
+}
+
 int save_highscores(High_Scores *old, High_Scores *update, const char *pathname){
-    FILE *file = fopen(pathname, "r+");
+    char file_path[strlen(pathname) + 8];
+    strcpy(file_path, pathname);
+    strcat(file_path, "\\.score");
+    FILE *file = fopen(file_path, "r+");
     if (file == NULL){
         puts("File doesnt exist. Aborting");
         return 1;
@@ -184,6 +190,9 @@ int save_highscores(High_Scores *old, High_Scores *update, const char *pathname)
         if (!strncmp(easy, line, strlen(easy))){
             //add error handling
             fprintf(file, "\t-easy: %d;", update->easy);
+            //"%d;", update->easy);
+            //need to write char by char. careful by overwriting next lines
+            //that way we avoid duplicate chars like ;;
             puts("Printing on easy line");
             prev = cur;
             fsetpos(file, &cur);
@@ -238,4 +247,8 @@ int save_highscores(High_Scores *old, High_Scores *update, const char *pathname)
     }
     fclose(file);
     return 0;
+}
+
+void print_scores(High_Scores *scores){
+    printf("Easy: %d, Norm: %d, Hard: %d\n", scores->easy, scores->norm, scores->hard);
 }

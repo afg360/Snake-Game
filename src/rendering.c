@@ -4,7 +4,6 @@
 #include <constants.h>
 #include <utils.h>
 
-
 void setup(){
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
         SDL_Log("Error: Initialisation of SDL -> %s\n", SDL_GetError());
@@ -421,15 +420,16 @@ void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area,
 }
 
 
-void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores){
-    Snake *snake = spawn();
-    Food *food = initFood();
+void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores, const char *pathname){
     unsigned int desired_delta;
     TTF_Font *font = open_font(10);
     SDL_Texture *score_texture;
+    SDL_Rect score_rect = {WIDTH * 4 / 9, HEIGHT / 11, BOX_w / 4, BOX_h};
     //must have a rectangle that is dynamic... if score increases too much, rect can adjust
     SDL_Color color = {255, 255, 255, 100};
+    High_Scores new = *scores;
     char buffer[50];
+    int score = 0;
     switch (diff){
         case easy:
             desired_delta = 1000 / EASY_RATE;
@@ -446,14 +446,20 @@ void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *
             sprintf(buffer, "%d", scores->hard);
             score_texture = create_font_texture(renderer, font, buffer, color);
             break;
+        default:
+            puts("Invalid choice! Exiting program");
+            *running = 0;
+            TTF_CloseFont(font);
+            return;
     }
     TTF_CloseFont(font);
-    int score = 0;
+    Snake *snake = spawn();
+    Food *food = initFood();
     move(snake);
     while (*running){
         SDL_Event event;
         color_snake(snake, renderer);
-
+        SDL_RenderCopy(renderer, score_texture, NULL, &score_rect);
         if (checkCollision(snake)){
             SDL_Log("Game Over!\nScore: %d\n", score);
             clearFood(food);
@@ -523,6 +529,21 @@ void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *
         move(snake);
     }
     SDL_DestroyTexture(score_texture);
+    switch (diff){
+    case easy:
+        new.easy = score;
+        break;
+    case norm:
+        new.norm = score;
+        break;
+    case hard:
+        new.hard = score;
+        break;
+    }
+    if (save_highscores(scores, &new, pathname)){
+        puts("There was a problem saving the high scores");
+        *running = 0;
+    }
 }
 
 //take as argument a fxn. fxn is the switch statement (this one is same, others are repeated)

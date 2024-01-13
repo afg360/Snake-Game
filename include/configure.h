@@ -16,8 +16,11 @@ typedef struct high_scores{
 } High_Scores;
 
 void reset_buffer(char *buffer, int size);
+//returns a string to the path where the .config folder is located
 const char *create_config_folder();
-High_Scores check_score();
+//returns high_Scores from the .score file
+High_Scores check_score(const char *pathname);
 int save_highscores(High_Scores *old, High_Scores *update, const char *pathname);
+void print_scores(High_Scores *scores);
 
 #endif
