@@ -58,26 +58,73 @@ void set_draw_color(SDL_Renderer *renderer, int r, int g, int b, int a, const ch
     }
 }
 
-void color_snake(Snake *snake, SDL_Renderer *renderer){
-        set_draw_color(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
-        SDL_Rect snake_part = {snake->body[0].x, snake->body[0].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-        if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-            ErrMessage("Error: Impossible to color a rectangle");
-        }
-        if (snake->size > 1){
-            for (int i = 1; i<snake->size - 1; i++){
-                set_draw_color(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE, "Could not color snake body");//make blue color for head
-                SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
-                if (SDL_RenderFillRect(renderer, &snake_part) != 0){
-                    ErrMessage("Error: Impossible to color a rectangle");
+enum COLOR get_selected_color(enum state colors[], int size){
+    for (int i = 0; i < size; i++){
+        if (colors[i] == equipped){
+                switch(i){
+                    case 0:
+                        return blue;
+                    case 1:
+                        return green;
+                    case 2:
+                        return yellow;
+                    case 3:
+                        return red;
                 }
             }
-            set_draw_color(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE, "Could not color snake head");//make blue color for head
-            SDL_Rect snake_part = {snake->body[snake->size-1].x, snake->body[snake->size-1].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+    }
+    return green;
+}
+
+void color_snake(enum state colors[], int size, Snake *snake, SDL_Renderer *renderer){
+    enum COLOR color = get_selected_color(colors, COLOR_SIZE);
+    switch (color){
+        case blue:
+            set_draw_color(renderer, 0, 0, 204, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+            break;
+        case green:
+            set_draw_color(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+            break;
+        case yellow:
+            set_draw_color(renderer, 204, 204, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+            break;
+        case red:
+            set_draw_color(renderer, 204, 0, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+            break;
+    }
+    //set_draw_color(renderer, 0, 204, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+    SDL_Rect snake_part = {snake->body[0].x, snake->body[0].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+    if (SDL_RenderFillRect(renderer, &snake_part) != 0){
+        ErrMessage("Error: Impossible to color a rectangle");
+    }
+    if (snake->size > 1){
+        for (int i = 1; i<snake->size - 1; i++){
+            switch (color){
+                case blue:
+                    set_draw_color(renderer, 0, 5 * i, max(153, (int) (306 - i) / (5 * i)), SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+                    break;
+                case green:
+                    set_draw_color(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+                    break;
+                case yellow:
+                    set_draw_color(renderer, max(153, (int) (306 - i) / (5 * i)), 5 * i, 0, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+                    break;
+                case red:
+                    set_draw_color(renderer, max(153, (int) (306 - i) / (5 * i)), 0, 5 * i, SDL_ALPHA_OPAQUE,"Error: Changing color for the render");
+                    break;
+            }
+            //set_draw_color(renderer, 0, max(153, (int) (306 - i) / (5 * i)), 5 * i, SDL_ALPHA_OPAQUE, "Could not color snake body");//make blue color for head
+            SDL_Rect snake_part = {snake->body[i].x, snake->body[i].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
             if (SDL_RenderFillRect(renderer, &snake_part) != 0){
                 ErrMessage("Error: Impossible to color a rectangle");
             }
         }
+        set_draw_color(renderer, 0, 102, 0, SDL_ALPHA_OPAQUE, "Could not color snake head");//make blue color for head
+        SDL_Rect snake_part = {snake->body[snake->size-1].x, snake->body[snake->size-1].y, PIXEL_UNIT-1, PIXEL_UNIT-1};
+        if (SDL_RenderFillRect(renderer, &snake_part) != 0){
+            ErrMessage("Error: Impossible to color a rectangle");
+        }
+    }
 }
 
 void color_food(Food *food, SDL_Renderer *renderer){
@@ -420,7 +467,7 @@ void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area,
 }
 
 
-void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores){
+void game_loop(enum state colors[], int size, SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores){
     unsigned int desired_delta;
     TTF_Font *font = open_font(10);
     SDL_Texture *score_texture;
@@ -458,7 +505,7 @@ void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *
     move(snake);
     while (*running){
         SDL_Event event;
-        color_snake(snake, renderer);
+        color_snake(colors, size, snake, renderer);
         SDL_RenderCopy(renderer, score_texture, NULL, &score_rect);
         if (checkCollision(snake)){
             SDL_Log("Game Over!\nScore: %d\n", score);

@@ -12,8 +12,9 @@ int main(int argc, char *argv[]){
     unlocks = check_config_file();
     #endif
     High_Scores scores = unlocks.high_scores;
-    struct player_colors colors = unlocks.colors;
-    print_colors(&colors);
+    enum state colors[4];
+    //memcpy(colors, unlocks.colors, sizeof(unlocks.colors));
+    print_colors(unlocks.colors, 4);
     
     setup();
     
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]){
                 level_menu(renderer, &difficulty, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running, difficulty, &state, &scores);
+                game_loop(unlocks.colors, COLOR_SIZE, renderer, &running, difficulty, &state, &scores);
                 break;
             //case pause:
             //    pause_loop(renderer, &running);
@@ -66,7 +67,9 @@ int main(int argc, char *argv[]){
     SDL_Quit();
 
     unlocks.high_scores = scores;
-    unlocks.colors = colors;
+    //for (int i = 0 ; i < COLOR_SIZE; i++){
+    //    unlocks.colors[i] = c
+    //}
     save_player_data(&unlocks);
     return EXIT_SUCCESS;
 }

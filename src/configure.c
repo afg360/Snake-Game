@@ -21,14 +21,13 @@ void save_player_data(struct Player_unlocks *data){
 	const char *filename = ".config/.settings";
 	FILE *file = fopen(filename, "w");
     High_Scores scores = data->high_scores;
-    struct player_colors colors = data->colors;
 	if (!fprintf(file, "high-scores:\n\t-easy: %d\n\t-medium: %d\n\t-hard: %d\n", 
 		scores.easy, scores.medium, scores.hard
 	)){
 		puts("An error occured trying to write high scores in the file.");
 	}
-    if (!fprintf(file, "colors:\n\t-blue: %d\n\t-green: %d\n\t-yellow: %d\n\t-red: %d",
-        colors.blue, colors.green, colors.yellow, colors.red
+    if (!fprintf(file, "\ncolors:\n\t-blue: %d\n\t-green: %d\n\t-yellow: %d\n\t-red: %d\n",
+        data->colors[0], data->colors[1], data->colors[2], data->colors[3]
     )){
 		puts("An error occured trying to write colors in the file.");
 	}
@@ -53,7 +52,7 @@ int get_score_from_file(const char *score, int start){
 	return (!is_num(foo)) ? -1 : atoi(foo);
 }
 
-void read_file(FILE *file, High_Scores *scores, struct player_colors *colors){
+void read_file(FILE *file, High_Scores *scores, enum state colors[], int size){
 	char line[40];
 	enum setting i = none;
     int j = 1;
@@ -100,7 +99,7 @@ void read_scores(const char *line, int line_num, High_Scores *score){
         score->hard = score_from_file;
     }
     else{
-        perror("Bad syntax!\n");
+        perror("Bad score syntax!\n");
         exit(1);
     }
 }
@@ -134,25 +133,22 @@ enum state get_color_from_file(const char *color, int start){
     }
 }
 
-void read_colors(const char *line, int line_num, struct player_colors *colors){
+//TODO must verify if available colors, and only 1 equipped
+void read_colors(const char *line, int line_num, enum state colors[]){
     if (!strncmp(line, "\t-blue: ", 8)){
-        enum state value = get_color_from_file(line, 8);
-        (value != error) ? colors->blue = value : exit(4);
+        colors[0] = get_color_from_file(line, 8);
     }
     else if (!strncmp(line, "\t-green: ", 9)){
-        enum state value = get_color_from_file(line, 9);
-        (value != error) ? colors->green = value : exit(4);
+        colors[1] = get_color_from_file(line, 9);
     }
     else if (!strncmp(line, "\t-yellow: ", 10)){
-        enum state value = get_color_from_file(line, 10);
-        (value != error) ? colors->yellow = value : exit(4);
+        colors[2] = get_color_from_file(line, 10);
     }
     else if (!strncmp(line, "\t-red: ", 7)){
-        enum state value = get_color_from_file(line, 7);
-        (value != error) ? colors->red = value : exit(4);
+        colors[3] = get_color_from_file(line, 7);
     }
     else{
-        perror("Bad syntax!\n");
+        perror("Bad color syntax!\n");
         exit(1);
     }
 }
@@ -168,9 +164,9 @@ void print_scores(High_Scores *scores){
     printf("Easy: %d, Medium: %d, Hard: %d\n", scores->easy, scores->medium, scores->hard);
 }
 
-void print_colors(struct player_colors *colors){
+void print_colors(enum state colors[], int size){
     printf("Blue: %d, Red: %d, Yellow: %d, Green: %d\n",
-        colors->blue, colors->red, colors->yellow, colors->green
+        colors[0], colors[1], colors[2], colors[3]
     );
 }
 
@@ -189,9 +185,13 @@ struct Player_unlocks check_config_file(){
                 FILE *file = fopen(filename, "w");
                 fclose(file);
                 High_Scores tmp = {0};
-                struct player_colors colors = {locked};
-                colors.green = equipped;
-                struct Player_unlocks unlocks = {tmp, colors};
+                enum state colors[COLOR_SIZE] = {locked};
+                colors[1] = equipped;
+                struct Player_unlocks unlocks;
+                unlocks.high_scores = tmp;
+                for (int i = 0; i < COLOR_SIZE; i++){
+                    unlocks.colors[i] = colors[i];
+                }
                 return unlocks;
             }
         }
@@ -208,10 +208,14 @@ struct Player_unlocks check_config_file(){
             exit(1);
         }
         High_Scores scores = {0};
-        struct player_colors colors = {locked};
-        read_file(file, &scores, &colors);
+        enum state colors[COLOR_SIZE] = {locked};
+        read_file(file, &scores, colors, COLOR_SIZE);
         fclose(file);
-        struct Player_unlocks data = {scores, colors};
+        struct Player_unlocks data;
+        data.high_scores = scores;
+        for (int i = 0; i < COLOR_SIZE; i++){
+            data.colors[i] = colors[i];
+        }
         return data;
     }
 }

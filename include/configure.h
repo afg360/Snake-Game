@@ -1,6 +1,7 @@
 #ifndef __CONFIGURE_H__
 #define __CONFIGURE_H__
 
+#define COLOR_SIZE 4
 //fxns linked to the options menu
 //soundfx/volume
 //config files for size of grid
@@ -23,28 +24,22 @@ enum state{
     locked, unlocked, equipped, error
 };
 
-struct player_colors{
-    enum state blue;
-    enum state green;
-    enum state red;
-    enum state yellow;
-};
-
 struct Player_unlocks{
     High_Scores high_scores;
-    struct player_colors colors;
+    //{blue, green, yellow, red}
+    enum state colors[4];
 };
 
 int is_num(const char *string);
 void save_player_data(struct Player_unlocks *data);
 int get_score_from_file(const char *score, int start);
-void read_file(FILE *file, High_Scores *score, struct player_colors *colors);
+void read_file(FILE *file, High_Scores *score, enum state colors[], int size);
 void read_scores(const char *line, int line_num, High_Scores *score);
 enum state get_color_from_file(const char *color, int start);
-void read_colors(const char *line, int line_num, struct player_colors *colors);
+void read_colors(const char *line, int line_num, enum state colors[]);
 void file_error(int score, int line_num);
 void print_scores(High_Scores *scores);
-void print_colors(struct player_colors *colors);
+void print_colors(enum state colors[], int size);
 
 #ifdef _WIN32
 #include <fileapi.h>
