@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <rendering.h>
 #include <constants.h>
-#include <utils.h>
+//#include <utils.h>
 
 void setup(){
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -420,7 +420,7 @@ void growing_animation(SDL_Renderer *renderer, SDL_Rect *prect_area,
 }
 
 
-void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores, const char *pathname){
+void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *state, High_Scores *scores){
     unsigned int desired_delta;
     TTF_Font *font = open_font(10);
     SDL_Texture *score_texture;
@@ -438,7 +438,7 @@ void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *
             break;
         case norm:
             desired_delta = 1000 / NORM_RATE;
-            sprintf(buffer, "%d", scores->norm);
+            sprintf(buffer, "%d", scores->medium);
             score_texture = create_font_texture(renderer, font, buffer, color);
             break;
         case hard:
@@ -530,19 +530,21 @@ void game_loop(SDL_Renderer *renderer, int *running, enum DIFF diff, enum MENU *
     }
     SDL_DestroyTexture(score_texture);
     switch (diff){
-    case easy:
-        new.easy = score;
-        break;
-    case norm:
-        new.norm = score;
-        break;
-    case hard:
-        new.hard = score;
-        break;
-    }
-    if (save_highscores(scores, &new, pathname)){
-        puts("There was a problem saving the high scores");
-        *running = 0;
+        case easy:
+            if (score > scores->easy){
+                scores->easy = score;
+            }
+            break;
+        case norm:
+            if (score > scores->medium){
+                scores->medium = score;
+            }
+            break;
+        case hard:
+            if (score > scores->hard){
+                scores->hard = score;
+            }
+            break;
     }
 }
 

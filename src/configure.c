@@ -1,254 +1,282 @@
-//windows specific
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 //#include <options.h>
-#include <fileapi.h>
 #include <string.h>
-#include "../include/configure.h"
+#include <configure.h>
 
-void reset_buffer(char *buffer, int size){
-    char c = buffer[0];
-    int i = 0;
-    while (c != '\0' && i < size){
-        *buffer = '\0';
-        buffer += sizeof(char);
-        c = *buffer;
-        i++;
-    }
+
+int is_num(const char *string){
+	for (int i = 0; i < strlen(string); i++){
+		//WON'T ACCEPT NEGATIVE NUMS
+		if (isdigit(string[i])){
+			return 1;
+		}
+	}
+	return 0;
 }
 
-const char *create_config_folder(){
-    //either .exe is in bin folder,
-    //or ran straight...
-    const char *path = ".\\.config";
-    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
-        const char *dev_path = "..\\.config";
-        if (GetFileAttributesA(dev_path) == INVALID_FILE_ATTRIBUTES) {
-            if (CreateDirectoryA(path, NULL)) {
-                puts("Created .config folder");
-                if (!SetFileAttributesA(path, FILE_ATTRIBUTE_HIDDEN)) puts("Could not make folder hidden...");
-                return path;
-            }
-            else{
-                puts("Error in trying to create a .config dir. Aborting.");
-                exit(1);
-            }
+void save_player_data(struct Player_unlocks *data){
+	//rewrite all the data (i.e. overwrite the .settings file)
+	const char *filename = ".config/.settings";
+	FILE *file = fopen(filename, "w");
+    High_Scores scores = data->high_scores;
+    struct player_colors colors = data->colors;
+	if (!fprintf(file, "high-scores:\n\t-easy: %d\n\t-medium: %d\n\t-hard: %d\n", 
+		scores.easy, scores.medium, scores.hard
+	)){
+		puts("An error occured trying to write high scores in the file.");
+	}
+    if (!fprintf(file, "colors:\n\t-blue: %d\n\t-green: %d\n\t-yellow: %d\n\t-red: %d",
+        colors.blue, colors.green, colors.yellow, colors.red
+    )){
+		puts("An error occured trying to write colors in the file.");
+	}
+
+}
+
+int get_score_from_file(const char *score, int start){
+	//check if score is actually defined, i.e. is it 
+	if (start >= strlen(score)){
+		puts("There is no score written!");
+		return 2;
+	}
+	#define size_foo 30
+	char foo[size_foo];
+	if (strlen(score) >= size_foo){
+		puts("Your file is corrupted!");
+		return 3;
+	}
+	//do we need to skip the newline ('\n') in score?
+	//printf("Sizeof score for dbg: %ld", strlen(score));
+	strncpy(foo, &(score[start]), strlen(score) - 1);
+	return (!is_num(foo)) ? -1 : atoi(foo);
+}
+
+void read_file(FILE *file, High_Scores *scores, struct player_colors *colors){
+	char line[40];
+	enum setting i = none;
+    int j = 1;
+	while (fgets(line, sizeof(line), file) != NULL) {
+        //add comments using #?
+		if (!strcmp(line, "high-scores:\n") && i == none){
+			//puts("Good syntax");
+			i = high_scores_settings;
+		}
+        else if (!strcmp(line, "\n")){
+            i = none;
         }
+        else if (!strcmp(line, "colors:\n") && i == none){
+            i = colors_settings;
+        }
+        else if (i == colors_settings){
+            read_colors(line, j, colors);
+        }
+		else if (i == high_scores_settings){
+			read_scores(line, j, scores);
+		}
         else{
-            puts("Dev path exists");
-            return dev_path;
-        }
-    }
-    else{
-        puts("Path exists");
-        return path;
-    } 
-}
-
-High_Scores check_score(const char *path){
-    char path_buffer[strlen(path) + 8];
-    strcpy(path_buffer, path);
-    strcat(path_buffer, "\\.score");
-    FILE *score = fopen(path_buffer, "r");
-    if (score == NULL){
-        puts("Could not open .score file. Creating a .score file");
-        fclose(score);
-        score = fopen(path_buffer, "a+");
-        High_Scores scores = {0, 0, 0};
-        const char *data = "high-scores\n\t-easy: %d;\n\t-norm: %d;\n\t-hard: %d;";
-        if (fprintf(score, data, scores.easy, scores.norm, scores.hard) < 0){
-            puts("Error writing a .score file");
-            fclose(score);
+            puts("Syntax error!");
             exit(1);
         }
-        fclose(score);
-        return scores;
+        j++;
+	}
+}
+
+void read_scores(const char *line, int line_num, High_Scores *score){
+    if (!strncmp(line, "\t-easy: ", 8)){
+        int score_from_file = get_score_from_file(line, 8);
+        file_error(score_from_file, line_num);
+        score->easy = score_from_file;
+    }
+    else if (!strncmp(line, "\t-medium: ", 9)){
+        int score_from_file = get_score_from_file(line, 9);
+        file_error(score_from_file, line_num);
+        score->medium = score_from_file;
+    }
+    else if (!strncmp(line, "\t-hard: ", 8)){
+        int score_from_file = get_score_from_file(line, 8);
+        file_error(score_from_file, line_num);
+        score->hard = score_from_file;
     }
     else{
-        char line[100]; 
-        const char *first = "high-scores\n";
-        const char *easy = "\t-easy: ";
-        const char *norm = "\t-norm: ";
-        const char *hard = "\t-hard: ";
-        fgets(line, 100, score);
-        if (strcmp(line, first)){
-            puts("Syntax error in .score file!");
-            fclose(score);
-            exit(1);
-        }
-        High_Scores scores;
-        char data[50];
-        reset_buffer(data, 50);
-        while(!feof(score)){
-            fgets(line, 50, score);
-            char *tmp;
-            if (!strncmp(line, easy, strlen(easy))){
-                //go to ith char of line, where i is char after easy
-                tmp = line + strlen(easy) * sizeof(char);
-                //char before the \n
-                if (strlen(tmp) > 2 && tmp[strlen(tmp) - 2] == ';'){
-                    strncpy(data, tmp, strlen(tmp) - 2);
-                    for (int i = 0; i < strlen(data); i++){
-                        if (!isdigit(data[i])){
-                            printf("Syntax error: cannot have a non digit as a score!\n%s\n", line);
-                            exit(1);
-                        }
-                    }
-                    scores.easy = atoi(data);
-                }
-                else if (strlen(tmp) > 2 && tmp[strlen(tmp) - 1] != ';'){
-                    puts("Syntax error in easy row");
-                    exit(1);
-                }
-                else{
-                    puts("No high score found for easy... Aborting");
-                    fclose(score);
-                    exit(1);
-                }
-            }
-            else if (!strncmp(line, norm, strlen(norm))){
-                tmp = line + strlen(norm) * sizeof(char);
-                //char before the \n
-                if (strlen(tmp) > 2 && tmp[strlen(tmp) - 2] == ';'){
-                    strncpy(data, tmp, strlen(tmp) - 2);
-                    for (int i = 0; i < strlen(data); i++){
-                        if (!isdigit(data[i])){
-                            printf("Syntax error: cannot have a non digit as a score!\n%s\n", line);
-                            exit(1);
-                        }
-                    }
-                    scores.norm = atoi(data);
-                }
-                else if (strlen(tmp) > 2 && tmp[strlen(tmp) - 1] != ';'){
-                    puts("Syntax error in norm row");
-                    exit(1);
-                }
-                else{
-                    puts("No high score found for norm... Aborting");
-                    fclose(score);
-                    exit(1);
-                }
-            }
-            else if (!strncmp(line, hard, strlen(hard))){
-                tmp = line + strlen(hard) * sizeof(char);
-                //no \n in hard
-                if (strlen(tmp) > 1 && tmp[strlen(tmp) - 1] == ';'){
-                    strncpy(data, tmp, strlen(tmp) - 1);
-                    for (int i = 0; i < strlen(data); i++){
-                        if (!isdigit(data[i])){
-                            printf("Syntax error: cannot have a non digit as a score!\n%s\n", line);
-                            exit(1);
-                        }
-                    }
-                    scores.hard = atoi(data);
-                }
-                else if (strlen(tmp) > 1 && tmp[strlen(tmp) - 1] != ';'){
-                    puts("Syntax error in hard row");
-                    exit(1);
-                }
-                else{
-                    puts("No high score found for hard... Aborting");
-                    fclose(score);
-                    exit(1);
-                }
-            }
-            else{
-                puts("Syntax error inside high-scores block!");
-                printf("%d, %d, %d", scores.easy, scores.norm, scores.hard);
-                fclose(score);
-                exit(1);
-            }
-        }
-        return scores;
+        perror("Bad syntax!\n");
+        exit(1);
     }
 }
 
-void helper(const int score){
-
+enum state get_color_from_file(const char *color, int start){
+	//check if score is actually defined, i.e. is it 
+	if (start >= strlen(color)){
+		puts("There is no color written!");
+		return 2;
+	}
+    //eventually could be a hexa color...
+	#define SIZE_COLOR 30
+	char foo[size_foo];
+	if (strlen(color) >= size_foo){
+		puts("Your file is corrupted!");
+		return error;
+	}
+	//do we need to skip the newline ('\n') in score?
+	//printf("Sizeof score for dbg: %ld", strlen(score));
+	strncpy(foo, &(color[start]), strlen(color) - 1);
+	int num = (!is_num(foo)) ? -1 : atoi(foo);
+    switch (num){
+        case 0:
+            return locked;
+        case 1:
+            return unlocked;
+        case 2:
+            return equipped;
+        default:
+            return error;
+    }
 }
 
-int save_highscores(High_Scores *old, High_Scores *update, const char *pathname){
-    char file_path[strlen(pathname) + 8];
-    strcpy(file_path, pathname);
-    strcat(file_path, "\\.score");
-    FILE *file = fopen(file_path, "r+");
-    if (file == NULL){
-        puts("File doesnt exist. Aborting");
-        return 1;
+void read_colors(const char *line, int line_num, struct player_colors *colors){
+    if (!strncmp(line, "\t-blue: ", 8)){
+        enum state value = get_color_from_file(line, 8);
+        (value != error) ? colors->blue = value : exit(4);
     }
-    fpos_t prev;
-    fpos_t cur;
-    char line[100];
-    fgets(line, 100, file);
-    fgetpos(file, &prev);
-    fgets(line, 100, file);
-    fgetpos(file, &cur);
-    fsetpos(file, &prev);
-    if (update->easy > old->easy){
-        const char *easy = "\t-easy: ";
-        if (!strncmp(easy, line, strlen(easy))){
-            //add error handling
-            fprintf(file, "\t-easy: %d;", update->easy);
-            //"%d;", update->easy);
-            //need to write char by char. careful by overwriting next lines
-            //that way we avoid duplicate chars like ;;
-            puts("Printing on easy line");
-            prev = cur;
-            fsetpos(file, &cur);
-            fgets(line, 100, file);
-        }
-        else{
-            printf("Syntax error: %s\n", line);
-            return 2;
-        }
+    else if (!strncmp(line, "\t-green: ", 9)){
+        enum state value = get_color_from_file(line, 9);
+        (value != error) ? colors->green = value : exit(4);
+    }
+    else if (!strncmp(line, "\t-yellow: ", 10)){
+        enum state value = get_color_from_file(line, 10);
+        (value != error) ? colors->yellow = value : exit(4);
+    }
+    else if (!strncmp(line, "\t-red: ", 7)){
+        enum state value = get_color_from_file(line, 7);
+        (value != error) ? colors->red = value : exit(4);
     }
     else{
-        fgets(line, 100, file);
-        prev = cur;
-        fgets(line, 100, file);
+        perror("Bad syntax!\n");
+        exit(1);
     }
-    fgetpos(file, &cur);
-    fsetpos(file, &prev);
-    if (update->norm > old->norm){
-        const char *norm = "\t-norm: ";
-        if (!strncmp(norm, line, strlen(norm))){
-            const char *w_norm = "\t-norm: %d;";
-            //add error handling
-            fprintf(file, w_norm, update->norm);
-            puts("Printing on norm line");
-            prev = cur;
-            fsetpos(file, &cur);
-            fgets(line, 100, file);
-        }
-        else{
-            printf("Syntax error: %s\n", line);
-            return 2;
-        }
+}
+
+void file_error(int score, int line_num){
+    if(score < 0){
+        printf("Syntax error on line %d!\n", line_num);
+        exit(3);
     }
-    else{
-        fgets(line, 100, file);
-        prev = cur;
-        fgets(line, 100, file);
-    }
-    fgetpos(file, &cur);
-    fsetpos(file, &prev);
-    if (update->hard > old->hard){
-        const char *hard = "\t-hard: ";
-        if (!strncmp(hard, line, strlen(hard))){
-            const char *w_hard = "\t-hard: %d;";
-            //add error handling
-            fprintf(file, w_hard, update->hard);
-        }
-        else{
-            printf("Syntax error: %s\n", line);
-            return 2;
-        }
-    }
-    fclose(file);
-    return 0;
 }
 
 void print_scores(High_Scores *scores){
-    printf("Easy: %d, Norm: %d, Hard: %d\n", scores->easy, scores->norm, scores->hard);
+    printf("Easy: %d, Medium: %d, Hard: %d\n", scores->easy, scores->medium, scores->hard);
 }
+
+void print_colors(struct player_colors *colors){
+    printf("Blue: %d, Red: %d, Yellow: %d, Green: %d\n",
+        colors->blue, colors->red, colors->yellow, colors->green
+    );
+}
+
+#ifdef _WIN32
+struct Player_unlocks check_config_file(){
+    const char *path = ".\\.config";
+    const char *filename = ".\\.config\\.settings";
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
+        if (CreateDirectory(path, NULL)){
+            puts("Created .config folder");
+            if (!SetFileAttributesA(path, FILE_ATTRIBUTE_HIDDEN)) {
+                puts("Could not make folder hidden...");
+                exit(2);
+            }
+            else{
+                FILE *file = fopen(filename, "w");
+                fclose(file);
+                High_Scores tmp = {0};
+                struct player_colors colors = {locked};
+                colors.green = equipped;
+                struct Player_unlocks unlocks = {tmp, colors};
+                return unlocks;
+            }
+        }
+        else{
+            puts("Error trying to make new dir");
+            exit(1);
+        }
+    }
+    else{
+        FILE *file = fopen(filename, "r");
+        //need to read the data
+        if (file == NULL) {
+            perror("The .settings file does not exist inside!");
+            exit(1);
+        }
+        High_Scores scores = {0};
+        struct player_colors colors = {locked};
+        read_file(file, &scores, &colors);
+        fclose(file);
+        struct Player_unlocks data = {scores, colors};
+        return data;
+    }
+}
+
+
+#else
+#ifdef __linux__
+High_Scores make_config_folder(){
+	struct stat st;
+	if (stat(pathname, &st) == 0 && S_ISDIR(st.st_mode)){
+		puts(".config path exists!");
+		//check if file .settings exists
+		char filename[1000];
+		snprintf(filename, 500, "%s/.settings", pathname);
+		FILE *file = fopen(filename, "r");
+		//need to read the data
+		if (file == NULL) {
+			perror("The .settings file does not exist inside!");
+			exit(1);
+		}
+		High_Scores data = {0};
+		read_scores(file, &data);
+		fclose(file);
+		return data;
+	}
+	else{
+		if (mkdir(pathname, 0777) == 0) {
+			puts("Created .config");
+			char filename[1000];
+			snprintf(filename, 500, "%s/.settings", pathname);
+			FILE *file = fopen(filename, "w");
+			if (file == NULL) exit(1);
+			fclose(file);
+			High_Scores data = {0};
+			return data;
+		}
+		else{
+			puts("Couldnt create a folder...");	
+			exit(1);
+		}
+	}
+}
+
+
+//int print_high_scores(High_Scores *data){
+//	return printf("\t\t\tHIGHSCORES\nEasy: %d\nMedium: %d\nHard: %d\n\n", data->easy, data->medium, data->hard);
+//}
+
+
+/** For testing */
+//int main(int argc, char *argv[]){
+//	High_Scores data = make_config_folder();
+//	print_high_scores(&data);
+//	data.easy = 5;
+//	data.medium = 32;
+//	data.hard = 78;
+//	save_high_scores(&data);
+//	//testing if we can change score
+//	//change_scores(&data);
+//	return 0;
+//}
+#else
+#if defined(__APPLE__) && defined(__MACH__)
+#else
+	#error "Unavailable operating system"
+#endif
+#endif
+#endif

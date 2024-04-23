@@ -2,8 +2,11 @@ INCLUDE = include
 libs =-lmingw32 -lSDL2main -lSDL2 
 dyn =-L bin -lSDL2_ttf
 
-all: obj\main.o obj\snake.o obj\food.o obj\utils.o obj\rendering.o obj\configure.o
-	gcc $^ -I $(INCLUDE) -L lib $(libs) $(dyn) -o .\bin\snake_Game 
+all : build
+	.\bin\Snake_Game
+
+build : obj\main.o obj\snake.o obj\food.o obj\utils.o obj\rendering.o obj\configure.o
+	gcc $^ -I $(INCLUDE) -L lib $(libs) $(dyn) -o .\bin\Snake_Game 
 
 obj\menu.o : src\menu.c
 	gcc $^ -c -I $(INCLUDE) -L lib $(libs) $(dyn) -o $@

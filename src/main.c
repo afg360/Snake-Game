@@ -7,6 +7,14 @@
 
 
 int main(int argc, char *argv[]){
+    struct Player_unlocks unlocks;
+    #ifdef _WIN32
+    unlocks = check_config_file();
+    #endif
+    High_Scores scores = unlocks.high_scores;
+    struct player_colors colors = unlocks.colors;
+    print_colors(&colors);
+    
     setup();
     
     SDL_Window *window = init_window();
@@ -14,13 +22,12 @@ int main(int argc, char *argv[]){
 
     int running = 1;
     enum MENU state = menu;
-    const char *path_config_folder = create_config_folder();
     SDL_Cursor *cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
     unsigned const int desired_delta = 1000 / MENU_RATE;
     enum DIFF difficulty;
 
     while (running){
-        High_Scores scores = check_score(path_config_folder);
+        //High_Scores scores = 
         unsigned int start = SDL_GetTicks();
         int mouse_x, mouse_y;
         int clicked = 0;
@@ -32,7 +39,7 @@ int main(int argc, char *argv[]){
                 level_menu(renderer, &difficulty, &mouse_x, &mouse_y, cursor, &running, &state);
                 break;
             case game:
-                game_loop(renderer, &running, difficulty, &state, &scores, path_config_folder);
+                game_loop(renderer, &running, difficulty, &state, &scores);
                 break;
             //case pause:
             //    pause_loop(renderer, &running);
@@ -58,5 +65,8 @@ int main(int argc, char *argv[]){
     TTF_Quit();
     SDL_Quit();
 
+    unlocks.high_scores = scores;
+    unlocks.colors = colors;
+    save_player_data(&unlocks);
     return EXIT_SUCCESS;
 }
