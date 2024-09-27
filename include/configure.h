@@ -2,6 +2,7 @@
 #define __CONFIGURE_H__
 
 #define COLOR_SIZE 4
+#include <stdio.h>
 //fxns linked to the options menu
 //soundfx/volume
 //config files for size of grid
@@ -43,13 +44,13 @@ void print_colors(enum state colors[], int size);
 
 #ifdef _WIN32
 #include <fileapi.h>
-struct Player_unlocks check_config_file();
+struct Player_unlocks check_config_folder();
 #endif
 
 #ifdef __linux__
 #include <sys/stat.h>
 #include <fcntl.h>
-High_Scores make_config_folder();
+struct Player_unlocks check_config_folder();
 #endif
 
 #endif

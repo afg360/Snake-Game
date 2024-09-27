@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 //#include <options.h>
@@ -29,9 +28,8 @@ void save_player_data(struct Player_unlocks *data){
     if (!fprintf(file, "\ncolors:\n\t-blue: %d\n\t-green: %d\n\t-yellow: %d\n\t-red: %d\n",
         data->colors[0], data->colors[1], data->colors[2], data->colors[3]
     )){
-		puts("An error occured trying to write colors in the file.");
+		perror("An error occured trying to write colors in the file.\n");
 	}
-
 }
 
 int get_score_from_file(const char *score, int start){
@@ -75,7 +73,7 @@ void read_file(FILE *file, High_Scores *scores, enum state colors[], int size){
 			read_scores(line, j, scores);
 		}
         else{
-            puts("Syntax error!");
+            perror("Syntax error!\n");
             exit(1);
         }
         j++;
@@ -107,14 +105,14 @@ void read_scores(const char *line, int line_num, High_Scores *score){
 enum state get_color_from_file(const char *color, int start){
 	//check if score is actually defined, i.e. is it 
 	if (start >= strlen(color)){
-		puts("There is no color written!");
+		perror("There is no color written!\n");
 		return 2;
 	}
     //eventually could be a hexa color...
 	#define SIZE_COLOR 30
 	char foo[size_foo];
 	if (strlen(color) >= size_foo){
-		puts("Your file is corrupted!");
+		perror("Your file is corrupted!\n");
 		return error;
 	}
 	//do we need to skip the newline ('\n') in score?
@@ -155,7 +153,7 @@ void read_colors(const char *line, int line_num, enum state colors[]){
 
 void file_error(int score, int line_num){
     if(score < 0){
-        printf("Syntax error on line %d!\n", line_num);
+        fprintf(stdout,"Syntax error on line %d!\n", line_num);
         exit(3);
     }
 }
@@ -171,7 +169,7 @@ void print_colors(enum state colors[], int size){
 }
 
 #ifdef _WIN32
-struct Player_unlocks check_config_file(){
+struct Player_unlocks check_config_folder(){
     const char *path = ".\\.config";
     const char *filename = ".\\.config\\.settings";
     if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) {
@@ -223,34 +221,45 @@ struct Player_unlocks check_config_file(){
 
 #else
 #ifdef __linux__
-High_Scores make_config_folder(){
+struct Player_unlocks check_config_folder(){
+    const char *path = "./.config";
+    const char *filename = "./.config/.settings";
 	struct stat st;
-	if (stat(pathname, &st) == 0 && S_ISDIR(st.st_mode)){
+	if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)){
 		puts(".config path exists!");
 		//check if file .settings exists
-		char filename[1000];
-		snprintf(filename, 500, "%s/.settings", pathname);
 		FILE *file = fopen(filename, "r");
 		//need to read the data
 		if (file == NULL) {
 			perror("The .settings file does not exist inside!");
 			exit(1);
 		}
-		High_Scores data = {0};
-		read_scores(file, &data);
-		fclose(file);
-		return data;
+		High_Scores scores = {0};
+        enum state colors[COLOR_SIZE] = {locked};
+        read_file(file, &scores, colors, COLOR_SIZE);
+        fclose(file);
+        struct Player_unlocks data;
+        data.high_scores = scores;
+        for (int i = 0; i < COLOR_SIZE; i++){
+            data.colors[i] = colors[i];
+        }
+        return data;
 	}
 	else{
-		if (mkdir(pathname, 0777) == 0) {
+		puts("Creating .config...");
+		if (!mkdir(path, 0777)) {
 			puts("Created .config");
-			char filename[1000];
-			snprintf(filename, 500, "%s/.settings", pathname);
 			FILE *file = fopen(filename, "w");
-			if (file == NULL) exit(1);
 			fclose(file);
-			High_Scores data = {0};
-			return data;
+			High_Scores tmp = {0};
+			enum state colors[COLOR_SIZE] = {locked};
+			colors[1] = equipped;
+			struct Player_unlocks unlocks;
+			unlocks.high_scores = tmp;
+			for (int i = 0; i < COLOR_SIZE; i++){
+				unlocks.colors[i] = colors[i];
+			}
+			return unlocks;
 		}
 		else{
 			puts("Couldnt create a folder...");	

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <rendering.h>
 #include <constants.h>
-//#include <utils.h>
+#include <utils.h>
 
 void setup(){
     if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -531,49 +531,46 @@ void game_loop(enum state colors[], int size, SDL_Renderer *renderer, int *runni
                     switch (event.key.keysym.sym){
                         case SDLK_UP:
                         case SDLK_w:
-                        //we will see if we keep it
                             if (snake->movement != South || snake->size <= 2) snake->movement = North;
-                            //snake->movement = North;, perhaps in hardcore mode
-                            continue;
+                            break;
                         case SDLK_DOWN:
                         case SDLK_s:
-                        //we will see if we keep it
                             if (snake->movement != North || snake->size <= 2) snake->movement = South;
-                            //snake->movement = South;
-                            continue;
+                            break;
                         case SDLK_RIGHT:
                         case SDLK_d:
-                        //we will see if we keep it
                             if (snake->movement != West || snake->size <= 2) snake->movement = East;
-                            //snake->movement = East;
-                            continue;
+                            break;
                         case SDLK_LEFT:
                         case SDLK_a:
-                        //we will see if we keep it
                             if (snake->movement != East || snake->size <= 2) snake->movement = West;
-                            //snake->movement = West;
-                            continue;
+                            break;
                         case SDLK_p:
                         case SDLK_ESCAPE:
                             pause_loop(renderer, running);
-                            continue;
-                        default: //previous direction
-                            continue;
+                            break;
                     }
+                    SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
+                    break;
                 case SDL_QUIT:
                     *running = 0;
                     clearSnake(snake);
                     clearFood(food);
                     break;
                 default:
-                    break;
+                    continue;
             }
         }
+		if (snake != NULL){
+			//we probably shut down the program forcibly, do not move the snake
+			//fprintf(stdout, "The given snake pointer is NULL. Something wrong happened...\n");
+			//break;
+			move(snake);
+		}
         FPSLimit(SDL_GetTicks(), desired_delta);
         SDL_RenderPresent(renderer);
         set_draw_color(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE, "Could not set black background color");//make red color for snake
         SDL_RenderClear(renderer);
-        move(snake);
     }
     SDL_DestroyTexture(score_texture);
     switch (diff){

@@ -5,6 +5,14 @@ This is a basic OG snake game, with menu items. Made for practicing how to imple
 - WASD keys
 - Up, Down, Left, Right arrow keys
 
-## Acknowledgements
-This application uses the [SDL2 library](https://github.com/libsdl-org/SDL), as well as the 
-[SDL2-TTF](https://github.com/libsdl-org/SDL_ttf) library.
+## Compiling
+### On Windows
+Please download the required libraries at 
+[https://github.com/libsdl-org/SDL](https://github.com/libsdl-org/SDL) 
+(for the SDL libraries), and 
+[https://github.com/libsdl-org/SDL_ttf](https://github.com/libsdl-org/SDL_ttf) 
+for the font library. The "SDL2.dll" and "SDL2_ttf.dll" must be placed in the bin directory, alongside the executable.
+
+### On Linux
+Be sure to have installed the SDL2 library packages 
+from your package manager.

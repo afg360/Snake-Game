@@ -8,9 +8,13 @@
 
 int main(int argc, char *argv[]){
     struct Player_unlocks unlocks;
-    #ifdef _WIN32
-    unlocks = check_config_file();
-    #endif
+	#ifdef _Win32
+		unlocks = check_config_folder();
+	#else
+		#ifdef __linux__
+			unlocks = check_config_folder();
+		#endif
+	#endif
     High_Scores scores = unlocks.high_scores;
     enum state colors[4];
     //memcpy(colors, unlocks.colors, sizeof(unlocks.colors));

@@ -1,9 +1,11 @@
 .vscode
-bin/*.exe
+bin/Snake_Game*
 obj
 build
 releases
 CMakeLists.txt
+.cache/
+compile_commands.json
 #include/configure*
 include/options*
 include/colors*
@@ -11,7 +13,7 @@ include/colors*
 src/.config
 src/del*
 src/options*
-src/configure.exe
+src/configure*
 src/colors*
 src/test*
 todo
