@@ -30,7 +30,11 @@ SDL_Renderer *init_renderer(SDL_Window *window){
 
 TTF_Font *open_font(int ptsize){
     TTF_Font *font = TTF_OpenFont("./assets/fonts/ka1.ttf", ptsize);
-    if (font == NULL) ErrMessage("Error: Renderer Creation");
+    if (font == NULL) {
+		font = TTF_OpenFont("../assets/fonts/ka1.ttf", ptsize);
+		if (font == NULL)
+			ErrMessage("Error: Renderer Creation");
+	}
     return font;
 }
 

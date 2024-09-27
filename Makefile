@@ -20,12 +20,13 @@ endif
 all : build
 	./bin/$(APP)
 
-
 debug: CFLAGS += -g
 debug: build_debug
+	@mkdir -p ./bin
 	gdb ./bin/$(APP)_debug
 
 build : obj/main.o obj/snake.o obj/food.o obj/utils.o obj/rendering.o obj/configure.o
+	@mkdir -p bin
 	gcc $^ -I $(INCLUDE) $(libs) -o ./bin/$(APP) 
 
 build_debug : obj/main.o obj/snake.o obj/food.o obj/utils.o obj/rendering.o obj/configure.o
