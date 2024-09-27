@@ -17,16 +17,19 @@ ifeq ($(OS), Windows_NT)
 	libs += -L lib -lmingw32 -lSDL2main -lSDL2 -mwindows -L bin -lSDL2_ttf
 endif
 
-all : build
+all : make_dir build
 	./bin/$(APP)
 
 debug: CFLAGS += -g
-debug: build_debug
-	@mkdir -p ./bin
+debug: make_dir build_debug
 	gdb ./bin/$(APP)_debug
 
+make_dir:
+	@mkdir -p ./bin
+	@mkdir -p obj
+
+
 build : obj/main.o obj/snake.o obj/food.o obj/utils.o obj/rendering.o obj/configure.o
-	@mkdir -p bin
 	gcc $^ -I $(INCLUDE) $(libs) -o ./bin/$(APP) 
 
 build_debug : obj/main.o obj/snake.o obj/food.o obj/utils.o obj/rendering.o obj/configure.o

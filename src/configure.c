@@ -162,8 +162,11 @@ void print_scores(High_Scores *scores){
     printf("Easy: %d, Medium: %d, Hard: %d\n", scores->easy, scores->medium, scores->hard);
 }
 
+/*
+ * @param colors: blue, green, yellow, red
+ * */
 void print_colors(enum state colors[], int size){
-    printf("Blue: %d, Red: %d, Yellow: %d, Green: %d\n",
+    printf("Blue: %d, Green: %d, Yellow: %d, Red: %d\n",
         colors[0], colors[1], colors[2], colors[3]
     );
 }
